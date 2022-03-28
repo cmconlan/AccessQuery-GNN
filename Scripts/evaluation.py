@@ -88,9 +88,9 @@ def performanceMetrics(predVector,inputData,testMask,y,shpFileLoc,oaInfoLoc,runR
 
 #%% add results to repository
 
-def writeResults(expNum,method,p, s, probeBudget, sampleRate, seedSplit, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,resultsFileName):
+def writeResults(expNum,method,p, s, probeBudget, sampleRate, seedSplit, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName):
 
-    resultRow = [expNum, method,p, s, probeBudget, sampleRate, seedSplit, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, infTime]
+    resultRow = [expNum, method,p, s, probeBudget, sampleRate, seedSplit, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, infTime,numSPQ]
     with open(resultsFileName,'a', newline='') as f:
         read_file = csv.writer(f)
         read_file.writerow(resultRow)

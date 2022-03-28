@@ -13,7 +13,7 @@ runRef = str(int(time()))
 
 resultsFileName = 'results/results_'+runRef+'.csv'
 
-header = ['expNum','method','poi','stratum','probe','sampleRate','seedSplit','spatialCnx','absError','absErrorPcnt','jainsError','jainsPred','jainsError','correlation','corrConfidence','inferenceTime']
+header = ['expNum','method','poi','stratum','probe','sampleRate','seedSplit','spatialCnx','absError','absErrorPcnt','jainsError','jainsPred','jainsError','correlation','corrConfidence','inferenceTime','numSPQ']
 
 with open(resultsFileName,'a', newline='') as f:
     read_file = csv.writer(f)
@@ -128,7 +128,7 @@ for p in pois:
                         method = 'Sampling'
                         aType = 'None'
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predSample,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,resultsFileName)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
                         
                         #OLS Regression
                         expNum += 1
@@ -139,7 +139,7 @@ for p in pois:
                         method = 'Regr-OLS'
                         aType = 'None'
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predOLS,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,resultsFileName)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
                         
                         #MLP Regression
                         expNum += 1
@@ -150,7 +150,7 @@ for p in pois:
                         method = 'Regr-MLP'
                         aType = 'None'
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predMLP,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,resultsFileName)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
                         runOnce == True
                     
                     for aType in spatialConnections:
@@ -166,7 +166,7 @@ for p in pois:
                         predGNNSimple, infTime = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
                         method = 'GNN-Simple'
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predGNNSimple,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,resultsFileName)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
 
                         # GNN Seeds
                         expNum += 1
@@ -177,5 +177,5 @@ for p in pois:
                         predGNNSeeds, infTime = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
                         method = 'GNN-Seeds'
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predGNNSeeds,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,resultsFileName)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
 
