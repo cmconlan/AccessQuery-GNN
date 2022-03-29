@@ -13,7 +13,7 @@ runRef = str(int(time()))
 
 resultsFileName = 'results/results_'+runRef+'.csv'
 
-header = ['expNum','method','poi','stratum','probe','sampleRate','seedSplit','spatialCnx','absError','absErrorPcnt','jainsError','jainsPred','jainsError','correlation','corrConfidence','inferenceTime','numSPQ']
+header = ['expNum','method','poi','stratum','probe','sampleRate','seedSplit','spatialCnx','absError','absErrorPcnt','jainsActual','jainsPred','jainsError','correlation','corrConfidence','inferenceTime','numSPQ']
 
 with open(resultsFileName,'a', newline='') as f:
     read_file = csv.writer(f)
@@ -73,9 +73,9 @@ with open(fileName, 'w') as f:
 
 pois =     ['Hospital', 'Job Centre', 'Strategic Centre', 'School', 'Childcare', 'Rail Station']
 stratums = ['Weekday (AM peak)','Sunday']    
-probes =[0.7,0.5,0.3,0.2,0.1,0.05,0.03,0.01]
+probes =[0.7,0.5,0.3,0.1,0.05,0.03,0.01]
 sampleRates = [1,0.5,0.25]
-seedSplits = [0.7,0.5,0.3]
+seedSplits = [0.5,0.3]
 spatialConnections = ['1hop-g', 'walk-g', 'euc-g']
 
 # Static Parameters
@@ -92,23 +92,59 @@ adjLocDict = {
     'euc-MM' : 'Data/adjMx/adjMx_euclid_MM.npy',
     }
 
-#%% Count experiments
+# Count experiments
 
 countExp = 0
+
+expFind = 999999
 
 for p in pois:
     for s in stratums:
         for pb in probes:
             for sr in sampleRates:
+                countExp += 1
+                if countExp == expFind:
+                    print(p)
+                    print(s)
+                    print(pb)
+                    print(sr)
+                countExp += 1
+                if countExp == expFind:
+                    print(p)
+                    print(s)
+                    print(pb)
+                    print(sr)
+                countExp += 1
+                if countExp == expFind:
+                    print(p)
+                    print(s)
+                    print(pb)
+                    print(sr)
                 for ss in seedSplits:
-                    countExp += 3
                     for aType in spatialConnections:
-                        countExp += 2
+                        countExp += 1
+                        if countExp == expFind:
+                            print(p)
+                            print(s)
+                            print(pb)
+                            print(sr)
+                            print(ss)
+                            print(aType)
+                            print('simple')
+                        countExp += 1
+                        if countExp == expFind:
+                            print(p)
+                            print(s)
+                            print(pb)
+                            print(sr)
+                            print(ss)
+                            print(aType)
+                            print('seeds')
+                
 print('Number of experiments : ' + str(countExp))
 
-expNum = 0
-
 #Run Experiments
+expNum = 0
 
 for p in pois:
     for s in stratums:
@@ -151,7 +187,7 @@ for p in pois:
                         aType = 'None'
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predMLP,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
                         writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
-                        runOnce == True
+                        runOnce = True
                     
                     for aType in spatialConnections:
                         aType = '1hop-G'
@@ -178,4 +214,3 @@ for p in pois:
                         method = 'GNN-Seeds'
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predGNNSeeds,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
                         writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
-
