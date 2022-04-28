@@ -106,7 +106,7 @@ def baseTrainingData(dbLoc,shpFileLoc,oaInfoLoc,stratum,poiType):
     otpResultsFiltered['distToUrbanCentre'] = otpResultsFiltered['oa_id'].map(distToUrbanCentre)
     otpResultsFiltered['populationDensity'] = otpResultsFiltered['oa_id'].map(populationDensity)
 
-    return otpResultsFiltered, oaIndex
+    return otpResultsFiltered, oaIndex, poiLonLat
 
 #%% Load adjacency matrix
 

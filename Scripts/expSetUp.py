@@ -78,7 +78,7 @@ def getTestTrainingData(p,s,inputData,oaIndex,dbLoc,probeBudget,sampleRate,seedS
         else:
             seedTrainMask.append(False)
             
-    return x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, inputData, tripsResults.groupby('oa_id').size()[trainMask].sum()
+    return x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, inputData, tripsResults.groupby('oa_id').size()[trainMask].sum(), len(tripsResults)
 
 
 

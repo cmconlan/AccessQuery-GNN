@@ -13,7 +13,7 @@ runRef = str(int(time()))
 
 resultsFileName = 'results/results_'+runRef+'.csv'
 
-header = ['expNum','method','poi','stratum','probe','sampleRate','seedSplit','spatialCnx','absError','absErrorPcnt','jainsActual','jainsPred','jainsError','correlation','corrConfidence','inferenceTime','numSPQ']
+header = ['expNum','method','poi','stratum','probe','sampleRate','seedSplit','spatialCnx','absError','absErrorPcnt','jainsActual','jainsPred','jainsError','correlation','corrConfidence','errorCorrAvgDist','errorCorrArea','errorCorrDist','errorCorrPop','errorPcntCorrAvgDist','errorPcntCorrArea','errorPcntCorrDist','errorPcntCorrPop','inferenceTime','numSPQ']
 
 with open(resultsFileName,'a', newline='') as f:
     read_file = csv.writer(f)
@@ -23,6 +23,9 @@ with open(resultsFileName,'a', newline='') as f:
 
 if not os.path.exists('Results/Plots/'+runRef):
     os.makedirs('Results/Plots/'+runRef)
+    
+if not os.path.exists('Results/Data/'+runRef):
+    os.makedirs('Results/Data/'+runRef)
 
 # Model Parameters
 
@@ -75,11 +78,10 @@ pois =     ['Hospital', 'Job Centre', 'Strategic Centre', 'School', 'Childcare',
 stratums = ['Weekday (AM peak)','Sunday']    
 probes =[0.7,0.5,0.3,0.1,0.05,0.03,0.01]
 sampleRates = [1,0.5,0.25]
-seedSplits = [0.5,0.3]
-spatialConnections = ['1hop-g', 'walk-g', 'euc-g']
+seedSplits = [0.7,0.5,0.3]
+spatialConnections = ['1hop-G', 'walk-G', 'euc-G']
 
 # Static Parameters
-
 dbloc = 'Data/tfwm.db'
 shpLoc = 'Data/west_midlands_OAs/west_midlands_OAs.shp'
 oaInfoLoc = 'Data/oa_info.csv'
@@ -146,25 +148,26 @@ print('Number of experiments : ' + str(countExp))
 #Run Experiments
 expNum = 0
 
+#%%
 for p in pois:
     for s in stratums:
-        baseData, oaIndex = baseTrainingData(dbloc,shpLoc,oaInfoLoc,s,p)
+        baseData, oaIndex, poiLonLat = baseTrainingData(dbloc,shpLoc,oaInfoLoc,s,p)
         for pb in probes:
             for sr in sampleRates:
                 runOnce = False
                 for ss in seedSplits:
-                    x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ = getTestTrainingData(p,s,baseData,oaIndex,dbloc,pb,sr,ss,features,target='avgAccessCost')
+                    x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseTrainData, numSPQ, numFullSample = getTestTrainingData(p,s,baseData,oaIndex,dbloc,pb,sr,ss,features,target='avgAccessCost')
                     while runOnce == False:
                         #Sampling
                         expNum += 1
                         print()
                         print(expNum)
                         print(expNum/countExp)
-                        predSample, infTime = simpleSampling(baseData, testMask)
+                        predSample, infTime = simpleSampling(baseTrainData, testMask)
                         method = 'Sampling'
                         aType = 'None'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predSample,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
+                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predSample,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
                         
                         #OLS Regression
                         expNum += 1
@@ -174,8 +177,8 @@ for p in pois:
                         predOLS, infTime = OLSRegression(x,y,trainMask,testMask)
                         method = 'Regr-OLS'
                         aType = 'None'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predOLS,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
+                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predOLS,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
                         
                         #MLP Regression
                         expNum += 1
@@ -185,12 +188,11 @@ for p in pois:
                         predMLP, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
                         method = 'Regr-MLP'
                         aType = 'None'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predMLP,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
+                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predMLP,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
                         runOnce = True
                     
                     for aType in spatialConnections:
-                        aType = '1hop-G'
                         adjLoc = adjLocDict[aType]
                         edgeIndexNp,edgeWeightsNp = loadAdj(adjLoc,oaIndex)
                         
@@ -201,16 +203,16 @@ for p in pois:
                         print(expNum/countExp)
                         predGNNSimple, infTime = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
                         method = 'GNN-Simple'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predGNNSimple,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
+                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predGNNSimple,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
 
                         # GNN Seeds
                         expNum += 1
                         print()
                         print(expNum)
                         print(expNum/countExp)
-                        _x = appendPredictedCostToFeatures(baseData,seedMask,features,x,target='sampleAccessCost')
+                        _x = appendPredictedCostToFeatures(baseTrainData,seedMask,features,x,target='sampleAccessCost')
                         predGNNSeeds, infTime = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
                         method = 'GNN-Seeds'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence = performanceMetrics(predGNNSeeds,baseData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName)
+                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predGNNSeeds,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
+                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
