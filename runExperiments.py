@@ -67,7 +67,8 @@ device = experimentParams['device']
 
 #%%
 expNum = 0
-
+#Use placehold value in first instance
+ss = 0.5
 for p in experimentParams['POIsToTest']:
     for s in experimentParams['stratemsToTest']:
         #Get base training data (e.g., OAs with relevant features from POI and stratum)
@@ -75,44 +76,53 @@ for p in experimentParams['POIsToTest']:
         
         for pb in experimentParams['budgetsToTest']:
             for sr in experimentParams['sampleRatesToTest']:
-                for ss in experimentParams['seedSplitsToTest']:
-                    for al in experimentParams['ALToTest']:
-                        #Construct training matrices
-                        x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf)
-                        
-                        #Construct matrix
-                        featureForClustering = baseData[mf].to_numpy()
-                        adjMx = constructAdjMx(k,euclidPath,m,featureForClustering,oaIndex)
-                        edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
-                        
-                        if experimentParams['modelsToRun']['OLS']:
-                            #OLS Regression
-                            expNum += 1
-                            print('Experiment : ' + str(expNum))
-                            method = 'Regr-OLS'
-                            predVector, infTime = OLSRegression(x,y,trainMask,testMask)
-                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
-                        if experimentParams['modelsToRun']['MLP']:
-                            expNum += 1
-                            print('Experiment : ' + str(expNum))
-                            method = 'Regr-MLP'
-                            proceed = False
-                            while proceed == False:
-                                predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)                                
-                                if predVector.sum() > 10:
-                                    proceed = True
-                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
-                        if experimentParams['modelsToRun']['GNNSimple']:
-                            #GNN Simple
-                            expNum += 1
-                            print('Experiment : ' + str(expNum))
-                            method = 'GNN-Simple'
-                            predVector, infTime = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
-                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
-                        if experimentParams['modelsToRun']['GNNSeeds']:
+                for al in experimentParams['ALToTest']:
+                    #Construct training matrices
+                    x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf)
+                    
+                    #Construct matrix
+                    featureForClustering = baseData[mf].to_numpy()
+                    adjMx = constructAdjMx(k,euclidPath,m,featureForClustering,oaIndex)
+                    edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
+                    
+                    if experimentParams['modelsToRun']['OLS']:
+                        #OLS Regression
+                        expNum += 1
+                        print('Experiment : ' + str(expNum))
+                        method = 'Regr-OLS'
+                        predVector, infTime = OLSRegression(x,y,trainMask,testMask)
+                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                        writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                    if experimentParams['modelsToRun']['MLP']:
+                        expNum += 1
+                        print('Experiment : ' + str(expNum))
+                        method = 'Regr-MLP'
+                        proceed = False
+                        while proceed == False:
+                            predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)                                
+                            if predVector.sum() > 10:
+                                proceed = True
+                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                        writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                    
+                    if experimentParams['modelsToRun']['GNNSimple']:
+                        #GNN Simple
+                        expNum += 1
+                        print('Experiment : ' + str(expNum))
+                        method = 'GNN-Simple'
+                        predVector, infTime = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                        writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                    if experimentParams['modelsToRun']['GNNSeeds']:
+                        for ss in experimentParams['seedSplitsToTest']:
+                            #Construct training matrices
+                            x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf)
+                            
+                            #Construct matrix
+                            featureForClustering = baseData[mf].to_numpy()
+                            adjMx = constructAdjMx(k,euclidPath,m,featureForClustering,oaIndex)
+                            edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
+                            
                             #GNN with Seeds
                             expNum += 1
                             print('Experiment : ' + str(expNum))
