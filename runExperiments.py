@@ -23,6 +23,11 @@ with open('Experiments/'+ymlFile + '.yml', 'r') as stream:
 
 resultsFileName = 'Results/results_'+ymlFile+'.csv'
 
+try:
+    os.remove(resultsFileName)
+except OSError:
+    pass
+
 header = ['expNum','method','poi','stratum','budget','sampleRate','seedSplit','AL','absError','absErrorPcnt','jainsActual','jainsPred','jainsError','correlation','corrConfidence','inferenceTime','numSPQ']
 
 with open(resultsFileName,'a', newline='') as f:
