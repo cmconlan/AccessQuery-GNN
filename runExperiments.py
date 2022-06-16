@@ -42,7 +42,7 @@ if not os.path.exists('Results/Data/'+ymlFile):
 shpFileLoc = 'Data/west_midlands_OAs/west_midlands_OAs.shp'
 oaInfoLoc = 'Data/oa_info.csv'
 dbLoc= 'Data/access.db'
-euclidPath = 'C:/Users/chris/My Drive/University/Working Folder/Transport Access Tool/AccessQuery-GNN/Data/bus_network/euclidMatrix.csv'
+euclidPath = 'Data/bus_network/euclidMatrix.csv'
 
 # Experiment variables
 #model features
@@ -146,6 +146,7 @@ for p in experimentParams['POIsToTest']:
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
 # writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
 
+# #%%
 # #MLP Regression
 # expNum += 1
 # method = 'Regr-MLP'
@@ -153,6 +154,7 @@ for p in experimentParams['POIsToTest']:
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
 # writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
 
+# #%%
 # #GNN Simple
 # expNum += 1
 # method = 'GNN-Simple'
@@ -160,6 +162,7 @@ for p in experimentParams['POIsToTest']:
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
 # writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
 
+# #%%
 # #GNN with Seeds
 # expNum += 1
 # method = 'GNN-Seeds'
