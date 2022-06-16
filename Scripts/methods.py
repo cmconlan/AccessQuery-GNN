@@ -140,7 +140,7 @@ def MLPRegression(x,y,trainMask,testMask,numHiddenLayers,epochs, device):
         if round(testTrain,3) != 0:
             proceed = True
     timeEnd = time.time()    
-    return np.squeeze(model(xTest).detach().numpy()), timeEnd-timeStart
+    return np.squeeze(model(xTest).cpu().detach().numpy()), timeEnd-timeStart
 
 #%% Method 4- Simple GNN
 
