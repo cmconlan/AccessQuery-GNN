@@ -120,6 +120,7 @@ def MLPRegression(x,y,trainMask,testMask,numHiddenLayers,epochs, device):
     while proceed == False:
     
         model = Feedforward(x.shape[1], numHiddenLayers)
+        model.to(device)
         criterion = torch.nn.MSELoss()
         optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
         
