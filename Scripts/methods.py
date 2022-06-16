@@ -170,7 +170,7 @@ def GNNSimple(x,y,device,edgeIndexNp,edgeWeightsNp,hidden1,hidden2,epochs,trainM
         loss = criterion(out[trainMask], _y[trainMask].unsqueeze(1))
         loss.backward()
         optimizer.step()
-        print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
+        #print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
         losses.append(loss.item())
     timeEnd = time.time()
     return np.squeeze(model(_x, edgeIndex, edgeWeights)[testMask].detach().numpy()), timeEnd-timeStart
