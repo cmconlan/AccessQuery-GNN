@@ -21,7 +21,7 @@ with open('Experiments/'+ymlFile + '.yml', 'r') as stream:
 
 # Set up results environment
 
-resultsFileName = 'results/results_'+ymlFile+'.csv'
+resultsFileName = 'Results/results_'+ymlFile+'.csv'
 
 header = ['expNum','method','poi','stratum','budget','sampleRate','seedSplit','AL','absError','absErrorPcnt','jainsActual','jainsPred','jainsError','correlation','corrConfidence','inferenceTime','numSPQ']
 
@@ -60,6 +60,7 @@ hidden2GNN = experimentParams['GNNParameters']['hidden2GNN']
 epochsGNN = experimentParams['GNNParameters']['epochs']
 device = experimentParams['device']
 
+#%%
 expNum = 0
 
 for p in experimentParams['POIsToTest']:
@@ -122,12 +123,13 @@ for p in experimentParams['POIsToTest']:
 
 # baseData, oaIndex, poiLonLat, poiInd = getBaseTrainingData(shpFileLoc,oaInfoLoc,s,p,dbLoc)
 
+# #%%
+
 # pb = experimentParams['budgetsToTest'][1]
 # sr = experimentParams['sampleRatesToTest'][0]
 # ss = experimentParams['seedSplitsToTest'][0]
 # al = experimentParams['ALToTest'][0]
 
-# #%%
 # #Construct training matrices
 # x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf)
 
@@ -144,7 +146,6 @@ for p in experimentParams['POIsToTest']:
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
 # writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
 
-# #%%
 # #MLP Regression
 # expNum += 1
 # method = 'Regr-MLP'
@@ -152,7 +153,6 @@ for p in experimentParams['POIsToTest']:
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
 # writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
 
-# #%%
 # #GNN Simple
 # expNum += 1
 # method = 'GNN-Simple'
