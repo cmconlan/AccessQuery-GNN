@@ -151,7 +151,7 @@ def GNNSimple(x,y,device,edgeIndexNp,edgeWeightsNp,hidden1,hidden2,epochs,trainM
     _y = torch.tensor(y).to(device).float()
     edgeIndex = torch.tensor(edgeIndexNp).to(device).long()
     edgeWeights = torch.tensor(edgeWeightsNp).to(device).float()
-    edgeWeights2 = torch.tensor(np.expand_dims(edgeWeights,1)).to(device).float()
+    edgeWeights2 = torch.tensor(np.expand_dims(edgeWeightsNp,1)).to(device).float()
     
     #Instantitate moedl
     model = GCN(numFeatures = _x.shape[1], hidden_channel1=hidden1, hidden_channel2=hidden2, outputDim = 1)
