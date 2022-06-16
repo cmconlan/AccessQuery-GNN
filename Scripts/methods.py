@@ -135,7 +135,8 @@ def MLPRegression(x,y,trainMask,testMask,numHiddenLayers,epochs, device):
             loss.backward()
             optimizer.step()
         
-        if losses[-1] != losses[-10]:
+        testTrain = float(losses[-1].detach().numpy()) - float(losses[0].detach().numpy())
+        if round(testTrain,3) != 0:
             proceed = True
     timeEnd = time.time()    
     return np.squeeze(model(xTest).detach().numpy()), timeEnd-timeStart

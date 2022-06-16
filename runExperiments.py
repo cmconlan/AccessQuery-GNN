@@ -151,7 +151,10 @@ for p in experimentParams['POIsToTest']:
 # expNum += 1
 # method = 'Regr-MLP'
 # predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+
+# #%%
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+# #%%
 # writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
 
 # #%%
