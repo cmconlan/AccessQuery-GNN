@@ -130,7 +130,7 @@ def MLPRegression(x,y,trainMask,testMask,numHiddenLayers,epochs, device):
             optimizer.zero_grad()    # Forward pass
             y_pred = model(xTrain)    # Compute Loss
             loss = criterion(y_pred.squeeze(), yTrain)
-            print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
+            #print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
             losses.append(loss)
             loss.backward()
             optimizer.step()
@@ -139,13 +139,6 @@ def MLPRegression(x,y,trainMask,testMask,numHiddenLayers,epochs, device):
             proceed = True
     timeEnd = time.time()    
     return np.squeeze(model(xTest).detach().numpy()), timeEnd-timeStart
-
-#%%
-#numHiddenLayers = 64
-#epochs = 500
-#device = "cpu"
-
-#predMLP = MLPRegression(x,y,trainMask,testMask,numHiddenLayers,epochs)
 
 #%% Method 4- Simple GNN
 
@@ -169,18 +162,20 @@ def GNNSimple(x,y,device,edgeIndexNp,edgeWeightsNp,hidden1,hidden2,epochs,trainM
 
     model.train()
     
+    losses = []
+    
     for epoch in range(0, epochs):
         optimizer.zero_grad()
         out = model(_x, edgeIndex, edgeWeights2)
         loss = criterion(out[trainMask], _y[trainMask].unsqueeze(1))
         loss.backward()
         optimizer.step()
-        #print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
+        print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
+        losses.append(loss.item())
     timeEnd = time.time()
     return np.squeeze(model(_x, edgeIndex, edgeWeights)[testMask].detach().numpy()), timeEnd-timeStart
 
 #%%
-
 #device = "cpu"
 #hidden1 = 64
 #hidden2 = 64

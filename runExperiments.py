@@ -1,19 +1,29 @@
-from Scripts.dataPrep import baseTrainingData, loadAdj
-from Scripts.expSetUp import getTestTrainingData,appendPredictedCostToFeatures
+from Scripts.dataPrep import getBaseTrainingData, loadAdj
+from Scripts.expSetUp import getTestTrainingData,appendPredictedCostToFeatures,constructAdjMx
 from Scripts.methods import simpleSampling,OLSRegression,MLPRegression,GNNSimple
-from Scripts.evaluation import performanceMetrics, writeResults
+from Scripts.evaluation import getPerformanceMetrics, writeResults
+from Scripts.util.database import Database
 import csv
 import os
 from time import time
+import yaml
+import sys
+
 print('--Modules Imported--')
 
-# Create results csv
+# Import experiment yaml
 
-runRef = str(int(time()))
+#ymlFile = 'exp1'
+ymlFile = sys.argv[1]
 
-resultsFileName = 'results/results_'+runRef+'.csv'
+with open('Experiments/'+ymlFile + '.yml', 'r') as stream:
+    experimentParams = yaml.safe_load(stream)
 
-header = ['expNum','method','poi','stratum','probe','sampleRate','seedSplit','spatialCnx','absError','absErrorPcnt','jainsActual','jainsPred','jainsError','correlation','corrConfidence','errorCorrAvgDist','errorCorrArea','errorCorrDist','errorCorrPop','errorPcntCorrAvgDist','errorPcntCorrArea','errorPcntCorrDist','errorPcntCorrPop','inferenceTime','numSPQ']
+# Set up results environment
+
+resultsFileName = 'results/results_'+ymlFile+'.csv'
+
+header = ['expNum','method','poi','stratum','budget','sampleRate','seedSplit','AL','absError','absErrorPcnt','jainsActual','jainsPred','jainsError','correlation','corrConfidence','inferenceTime','numSPQ']
 
 with open(resultsFileName,'a', newline='') as f:
     read_file = csv.writer(f)
@@ -21,198 +31,139 @@ with open(resultsFileName,'a', newline='') as f:
 
 # Create folder for plots
 
-if not os.path.exists('Results/Plots/'+runRef):
-    os.makedirs('Results/Plots/'+runRef)
+if not os.path.exists('Results/Plots/'+ymlFile):
+    os.makedirs('Results/Plots/'+ymlFile)
     
-if not os.path.exists('Results/Data/'+runRef):
-    os.makedirs('Results/Data/'+runRef)
+if not os.path.exists('Results/Data/'+ymlFile):
+    os.makedirs('Results/Data/'+ymlFile)
 
-# Model Parameters
+# Environment variables
 
-device = "cpu"
-
-features = ['avgEuclidDist','Shape__Are','distToUrbanCentre','populationDensity']
-target = 'avgAccessCost'
-
-#MLP
-hiddenMLP = 64
-epochsMLP = 500
-
-#GNN
-hidden1GNN = 64
-hidden2GNN = 64
-epochsGNN = 100
-
-#Write as text file
-
-fileName = 'results/settings'+runRef+'.txt'
-
-with open(fileName, 'w') as f:
-    f.write('Device : ' + str(device))
-    f.write('\n')
-    f.write('Features : ' + str(features))
-    f.write('\n')
-    f.write('Target : ' + str(target))
-    f.write('\n')
-    f.write('MLP Hidden Nodes : ' + str(hiddenMLP))
-    f.write('\n')
-    f.write('MLP Epochs : ' + str(epochsMLP))
-    f.write('\n')
-    f.write('GNN Hidden Layer 1 : ' + str(hidden1GNN))
-    f.write('\n')
-    f.write('GNN Hidden Layer 2 : ' + str(hidden2GNN))
-    f.write('\n')
-    f.write('GNN Epochs : ' + str(epochsGNN))
-    f.write('\n')    
-
-# Experiment Parameter sets
-
-#pois =     ['Hospital', 'Job Centre', 'Strategic Centre', 'School', 'Childcare', 'Rail Station']
-#stratums = ['Weekday (AM peak)','Weekday (PM peak)','Weekday (inter-peak)','Weekday (evening)','Saturday','Sunday']    
-#probes =[0.9,0.7,0.5,0.4,0.3,0.2,0.15,0.1,0.05,0.04,0.03,0.02,0.01]
-#sampleRates = [1,0.75,0.5,0.25,0.1]
-#seedSplits = [0.9,0.7,0.5,0.3,0.1]
-#spatialConnections = ['1hop-g', '1hop-mm', 'walk-g', 'walk-mm', 'euc-g', 'euc-mm']
-
-pois =     ['Hospital', 'Job Centre', 'Strategic Centre', 'School', 'Childcare', 'Rail Station']
-stratums = ['Weekday (AM peak)','Sunday']    
-probes =[0.7,0.5,0.3,0.1,0.05,0.03,0.01]
-sampleRates = [1,0.5,0.25]
-seedSplits = [0.7,0.5,0.3]
-spatialConnections = ['1hop-G', 'walk-G', 'euc-G']
-
-# Static Parameters
-dbloc = 'Data/tfwm.db'
-shpLoc = 'Data/west_midlands_OAs/west_midlands_OAs.shp'
+shpFileLoc = 'Data/west_midlands_OAs/west_midlands_OAs.shp'
 oaInfoLoc = 'Data/oa_info.csv'
-adjLocDict = {
-    '1hop-G' : 'Data/adjMx/adjMx_1hop_Gaus.npy',
-    '1hop-MM' : 'Data/adjMx/adjMx_1hop_Gaus.npy',
-    'walk-G' : 'Data/adjMx/adjMx_Walk_Gaus.npy',
-    'walk-MM' : 'Data/adjMx/adjMx_Walk_MM.npy',
-    'euc-G' : 'Data/adjMx/adjMx_euclid_Gaus.npy',
-    'euc-MM' : 'Data/adjMx/adjMx_euclid_MM.npy',
-    }
+dbLoc= 'Data/access.db'
+euclidPath = 'C:/Users/chris/My Drive/University/Working Folder/Transport Access Tool/AccessQuery-GNN/Data/bus_network/euclidMatrix.csv'
 
-# Count experiments
+# Experiment variables
+#model features
+mf = experimentParams['modelFeatures']
+mfAcc = experimentParams['predictFeatures']
+k = experimentParams['k']
+m = experimentParams['adjMxType']
 
-countExp = 0
+#Model variables
+hiddenMLP = experimentParams['MLPParameters']['hiddenMLP']
+epochsMLP = experimentParams['MLPParameters']['epochs']
 
-expFind = 999999
+hidden1GNN = experimentParams['GNNParameters']['hidden1GNN']
+hidden2GNN = experimentParams['GNNParameters']['hidden2GNN']
+epochsGNN = experimentParams['GNNParameters']['epochs']
+device = experimentParams['device']
 
-for p in pois:
-    for s in stratums:
-        for pb in probes:
-            for sr in sampleRates:
-                countExp += 1
-                if countExp == expFind:
-                    print(p)
-                    print(s)
-                    print(pb)
-                    print(sr)
-                countExp += 1
-                if countExp == expFind:
-                    print(p)
-                    print(s)
-                    print(pb)
-                    print(sr)
-                countExp += 1
-                if countExp == expFind:
-                    print(p)
-                    print(s)
-                    print(pb)
-                    print(sr)
-                for ss in seedSplits:
-                    for aType in spatialConnections:
-                        countExp += 1
-                        if countExp == expFind:
-                            print(p)
-                            print(s)
-                            print(pb)
-                            print(sr)
-                            print(ss)
-                            print(aType)
-                            print('simple')
-                        countExp += 1
-                        if countExp == expFind:
-                            print(p)
-                            print(s)
-                            print(pb)
-                            print(sr)
-                            print(ss)
-                            print(aType)
-                            print('seeds')
-                
-print('Number of experiments : ' + str(countExp))
-
-#Run Experiments
 expNum = 0
 
-#%%
-for p in pois:
-    for s in stratums:
-        baseData, oaIndex, poiLonLat = baseTrainingData(dbloc,shpLoc,oaInfoLoc,s,p)
-        for pb in probes:
-            for sr in sampleRates:
-                runOnce = False
-                for ss in seedSplits:
-                    x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseTrainData, numSPQ, numFullSample = getTestTrainingData(p,s,baseData,oaIndex,dbloc,pb,sr,ss,features,target='avgAccessCost')
-                    while runOnce == False:
-                        #Sampling
-                        expNum += 1
-                        print()
-                        print(expNum)
-                        print(expNum/countExp)
-                        predSample, infTime = simpleSampling(baseTrainData, testMask)
-                        method = 'Sampling'
-                        aType = 'None'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predSample,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
+for p in experimentParams['POIsToTest']:
+    for s in experimentParams['stratemsToTest']:
+        #Get base training data (e.g., OAs with relevant features from POI and stratum)
+        baseData, oaIndex, poiLonLat, poiInd = getBaseTrainingData(shpFileLoc,oaInfoLoc,s,p,dbLoc)
+        
+        for pb in experimentParams['budgetsToTest']:
+            for sr in experimentParams['sampleRatesToTest']:
+                for ss in experimentParams['seedSplitsToTest']:
+                    for al in experimentParams['ALToTest']:
+                        #Construct training matrices
+                        x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf)
                         
-                        #OLS Regression
-                        expNum += 1
-                        print()
-                        print(expNum)
-                        print(expNum/countExp)
-                        predOLS, infTime = OLSRegression(x,y,trainMask,testMask)
-                        method = 'Regr-OLS'
-                        aType = 'None'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predOLS,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
+                        #Construct matrix
+                        featureForClustering = baseData[mf].to_numpy()
+                        adjMx = constructAdjMx(k,euclidPath,m,featureForClustering,oaIndex)
+                        edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
                         
-                        #MLP Regression
-                        expNum += 1
-                        print()
-                        print(expNum)
-                        print(expNum/countExp)
-                        predMLP, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
-                        method = 'Regr-MLP'
-                        aType = 'None'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predMLP,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
-                        runOnce = True
-                    
-                    for aType in spatialConnections:
-                        adjLoc = adjLocDict[aType]
-                        edgeIndexNp,edgeWeightsNp = loadAdj(adjLoc,oaIndex)
+                        if experimentParams['modelsToRun']['OLS']:
+                            #OLS Regression
+                            expNum += 1
+                            print('Experiment : ' + str(expNum))
+                            method = 'Regr-OLS'
+                            predVector, infTime = OLSRegression(x,y,trainMask,testMask)
+                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        if experimentParams['modelsToRun']['MLP']:
+                            expNum += 1
+                            print('Experiment : ' + str(expNum))
+                            method = 'Regr-MLP'
+                            predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        if experimentParams['modelsToRun']['GNNSimple']:
+                            #GNN Simple
+                            expNum += 1
+                            print('Experiment : ' + str(expNum))
+                            method = 'GNN-Simple'
+                            predVector, infTime = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        if experimentParams['modelsToRun']['GNNSeeds']:
+                            #GNN with Seeds
+                            expNum += 1
+                            print('Experiment : ' + str(expNum))
+                            method = 'GNN-Seeds'
+                            _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
+                            predVector, infTime = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
                         
-                        #GNN Simple
-                        expNum += 1
-                        print()
-                        print(expNum)
-                        print(expNum/countExp)
-                        predGNNSimple, infTime = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
-                        method = 'GNN-Simple'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predGNNSimple,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
 
-                        # GNN Seeds
-                        expNum += 1
-                        print()
-                        print(expNum)
-                        print(expNum/countExp)
-                        _x = appendPredictedCostToFeatures(baseTrainData,seedMask,features,x,target='sampleAccessCost')
-                        predGNNSeeds, infTime = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
-                        method = 'GNN-Seeds'
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence, featureCorrelationsError, featureCorrelationsErrorPcnt, inputData = performanceMetrics(predGNNSeeds,baseTrainData,testMask,y,shpLoc,oaInfoLoc,runRef,expNum, trainMask, poiLonLat, x)
-                        writeResults(expNum,method,p, s, pb, sr, ss, aType, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,featureCorrelationsError,featureCorrelationsErrorPcnt,infTime,numSPQ,resultsFileName,inputData,runRef)
+#%%
+# expNum = 0
+
+# #%%
+# p = experimentParams['POIsToTest'][0]
+# s = experimentParams['stratemsToTest'][0]
+
+# baseData, oaIndex, poiLonLat, poiInd = getBaseTrainingData(shpFileLoc,oaInfoLoc,s,p,dbLoc)
+
+# pb = experimentParams['budgetsToTest'][1]
+# sr = experimentParams['sampleRatesToTest'][0]
+# ss = experimentParams['seedSplitsToTest'][0]
+# al = experimentParams['ALToTest'][0]
+
+# #%%
+# #Construct training matrices
+# x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf)
+
+# #Construct matrix
+# featureForClustering = baseData[mf].to_numpy()
+# adjMx = constructAdjMx(k,euclidPath,m,featureForClustering,oaIndex)
+# edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
+
+# #%%
+# #OLS Regression
+# expNum += 1
+# method = 'Regr-OLS'
+# predVector, infTime = OLSRegression(x,y,trainMask,testMask)
+# absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+# writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+
+# #%%
+# #MLP Regression
+# expNum += 1
+# method = 'Regr-MLP'
+# predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+# absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+# writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+
+# #%%
+# #GNN Simple
+# expNum += 1
+# method = 'GNN-Simple'
+# predVector, infTime = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+# absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+# writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+
+# #GNN with Seeds
+# expNum += 1
+# method = 'GNN-Seeds'
+# _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
+# predVector, infTime = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+# absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+# writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
