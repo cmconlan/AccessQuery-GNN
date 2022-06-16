@@ -13,8 +13,8 @@ print('--Modules Imported--')
 
 # Import experiment yaml
 
-#ymlFile = 'exp1'
-ymlFile = sys.argv[1]
+ymlFile = 'exp1'
+#ymlFile = sys.argv[1]
 
 with open('Experiments/'+ymlFile + '.yml', 'r') as stream:
     experimentParams = yaml.safe_load(stream)
@@ -92,7 +92,11 @@ for p in experimentParams['POIsToTest']:
                             expNum += 1
                             print('Experiment : ' + str(expNum))
                             method = 'Regr-MLP'
-                            predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+                            proceed = False
+                            while proceed == False:
+                                predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)                                
+                                if predVector.sum() > 10:
+                                    proceed = True
                             absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
                             writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
                         if experimentParams['modelsToRun']['GNNSimple']:
@@ -148,9 +152,18 @@ for p in experimentParams['POIsToTest']:
 
 # #%%
 # #MLP Regression
+
 # expNum += 1
 # method = 'Regr-MLP'
-# predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+
+# proceed = False
+# while proceed == False:
+#     predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+
+#     print(predVector.sum())
+    
+#     if predVector.sum() > 10:
+#         proceed = True
 
 # #%%
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
