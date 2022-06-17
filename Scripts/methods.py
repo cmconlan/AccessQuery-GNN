@@ -115,32 +115,28 @@ def MLPRegression(x,y,trainMask,testMask,numHiddenLayers,epochs, device):
     xTest = torch.tensor(x[testMask]).to(device).float()
     yTrain = torch.tensor(y[trainMask]).to(device).float()
     
-    proceed = False
+    model = Feedforward(x.shape[1], numHiddenLayers)
+    model.to(device)
+    criterion = torch.nn.MSELoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
     
-    while proceed == False:
+    losses = []
     
-        model = Feedforward(x.shape[1], numHiddenLayers)
-        model.to(device)
-        criterion = torch.nn.MSELoss()
-        optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
-        
-        losses = []
-        
-        model.train()
-        for epoch in range(epochs):    
-            optimizer.zero_grad()    # Forward pass
-            y_pred = model(xTrain)    # Compute Loss
-            loss = criterion(y_pred.squeeze(), yTrain)
-            #print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
-            losses.append(loss)
-            loss.backward()
-            optimizer.step()
-        proceed = True
+    model.train()
+    for epoch in range(epochs):    
+        optimizer.zero_grad()    # Forward pass
+        y_pred = model(xTrain)    # Compute Loss
+        loss = criterion(y_pred.squeeze(), yTrain)
+        #print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
+        losses.append(loss)
+        loss.backward()
+        optimizer.step()
+
         # testTrain = float(losses[-1].cpu().detach().numpy()) - float(losses[0].cpu().detach().numpy())
         # if round(testTrain,3) != 0:
         #     proceed = True
     timeEnd = time.time()    
-    return np.squeeze(model(xTest).cpu().detach().numpy()), timeEnd-timeStart
+    return np.squeeze(model(xTest).cpu().detach().numpy()), timeEnd-timeStart, losses
 
 #%% Method 4- Simple GNN
 

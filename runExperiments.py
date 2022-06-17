@@ -99,8 +99,8 @@ for p in experimentParams['POIsToTest']:
                         method = 'Regr-MLP'
                         proceed = False
                         while proceed == False:
-                            predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)                                
-                            if predVector.sum() > 10:
+                            predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)                                
+                            if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
                                 proceed = True
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
                         writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
@@ -137,7 +137,7 @@ for p in experimentParams['POIsToTest']:
 # expNum = 0
 
 # #%%
-# p = experimentParams['POIsToTest'][0]
+# p = experimentParams['POIsToTest'][2]
 # s = experimentParams['stratemsToTest'][0]
 
 # baseData, oaIndex, poiLonLat, poiInd = getBaseTrainingData(shpFileLoc,oaInfoLoc,s,p,dbLoc)
@@ -168,12 +168,21 @@ for p in experimentParams['POIsToTest']:
 # #%%
 # #MLP Regression
 
+# predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+# print(predVector.sum())
+# print(float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()))
+
+# #%%
+
+
+
+# #%%
 # expNum += 1
 # method = 'Regr-MLP'
 
 # proceed = False
 # while proceed == False:
-#     predVector, infTime = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+#     predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
 
 #     print(predVector.sum())
     
