@@ -4,3 +4,7 @@ Development/
 cache/
 Scripts/__pycache__/
 Experiments/
+*.bak
+*.ini
+*.yml
+*.pyc
