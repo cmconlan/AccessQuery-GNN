@@ -13,8 +13,8 @@ print('--Modules Imported--')
 
 # Import experiment yaml
 
-ymlFile = 'exp1'
-#ymlFile = sys.argv[1]
+#ymlFile = 'exp1'
+ymlFile = sys.argv[1]
 
 with open('Experiments/'+ymlFile + '.yml', 'r') as stream:
     experimentParams = yaml.safe_load(stream)
