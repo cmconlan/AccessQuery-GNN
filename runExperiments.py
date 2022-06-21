@@ -18,6 +18,7 @@ ymlFile = sys.argv[1]
 
 with open('Experiments/'+ymlFile + '.yml', 'r') as stream:
     experimentParams = yaml.safe_load(stream)
+print('YAML File : ' + str(ymlFile))
 
 # Set up results environment
 
