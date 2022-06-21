@@ -15,10 +15,10 @@ print('--Modules Imported--')
 
 #ymlFile = 'exp1'
 ymlFile = sys.argv[1]
+print('YAML File : ' + str(ymlFile))
 
 with open('Experiments/'+ymlFile + '.yml', 'r') as stream:
     experimentParams = yaml.safe_load(stream)
-print('YAML File : ' + str(ymlFile))
 
 # Set up results environment
 
