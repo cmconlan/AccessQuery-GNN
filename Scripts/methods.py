@@ -171,7 +171,7 @@ def GNNSimple(x,y,device,edgeIndexNp,edgeWeightsNp,hidden1,hidden2,epochs,trainM
         #print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
         losses.append(loss.item())
     timeEnd = time.time()
-    return np.squeeze(model(_x, edgeIndex, edgeWeights)[testMask].cpu().detach().numpy()), timeEnd-timeStart
+    return np.squeeze(model(_x, edgeIndex, edgeWeights)[testMask].cpu().detach().numpy()), timeEnd-timeStart, losses
 
 #%%
 #device = "cpu"

@@ -98,11 +98,13 @@ for p in experimentParams['POIsToTest']:
                         expNum += 1
                         print('Experiment : ' + str(expNum))
                         method = 'Regr-MLP'
-                        proceed = False
-                        while proceed == False:
+                        proceedMLP = False
+                        while proceedMLP == False:
                             predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)                                
                             if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
-                                proceed = True
+                                proceedMLP = True
+                        print()
+                        print('Evaluating MLP')
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
                         writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
                     
@@ -111,7 +113,13 @@ for p in experimentParams['POIsToTest']:
                         expNum += 1
                         print('Experiment : ' + str(expNum))
                         method = 'GNN-Simple'
-                        predVector, infTime = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+                        proceedGNNSimpl = False
+                        while proceedGNNSimpl == False:
+                            predVector, infTime. losses = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+                            if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
+                                proceedMLP = True
+                        print()
+                        print('Evaluating GNN Simple')
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
                         writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
                     if experimentParams['modelsToRun']['GNNSeeds']:
@@ -129,7 +137,13 @@ for p in experimentParams['POIsToTest']:
                             print('Experiment : ' + str(expNum))
                             method = 'GNN-Seeds'
                             _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
-                            predVector, infTime = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+                            proceedGNNSeeds = False
+                            while proceedGNNSeeds == False:
+                                predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+                                if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
+                                    proceedGNNSeeds = True
+                            print()
+                            print('Evaluating GNN Seeds')
                             absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
                             writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
                         
