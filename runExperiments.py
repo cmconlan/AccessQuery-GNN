@@ -118,8 +118,8 @@ for p in experimentParams['POIsToTest']:
                             predVector, infTime, losses = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
                             print(losses)
                             print(type(losses))
-                            if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
-                                proceedMLP = True
+                            if float(losses[-1]) / float(losses[0]) < 0.95:
+                                proceedGNNSimpl = True
                         print()
                         print('Evaluating GNN Simple')
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
@@ -142,7 +142,7 @@ for p in experimentParams['POIsToTest']:
                             proceedGNNSeeds = False
                             while proceedGNNSeeds == False:
                                 predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
-                                if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
+                                if float(losses[-1]) / float(losses[0]) < 0.95:
                                     proceedGNNSeeds = True
                             print()
                             print('Evaluating GNN Seeds')
@@ -185,45 +185,55 @@ for p in experimentParams['POIsToTest']:
 # #%%
 # #MLP Regression
 
-# predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
-# print(predVector.sum())
-# print(float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()))
 
-# #%%
-
-
-
-# #%%
 # expNum += 1
+# print('Experiment : ' + str(expNum))
 # method = 'Regr-MLP'
-
-# proceed = False
-# while proceed == False:
-#     predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
-
-#     print(predVector.sum())
-    
-#     if predVector.sum() > 10:
-#         proceed = True
-
-# #%%
+# proceedMLP = False
+# while proceedMLP == False:
+#     predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)                                
+#     if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
+#         proceedMLP = True
+# print()
+# print('Evaluating MLP')
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-# #%%
 # writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
 
 # #%%
+
 # #GNN Simple
 # expNum += 1
+# print('Experiment : ' + str(expNum))
 # method = 'GNN-Simple'
-# predVector, infTime = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+# proceedGNNSimpl = False
+# while proceedGNNSimpl == False:
+#     predVector, infTime, losses = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+#     print(float(losses[-1]) / float(losses[0]))
+#     if float(losses[-1]) / float(losses[0]) < 0.95:
+#         proceedGNNSimpl = True
+# print()
+# print('Evaluating GNN Simple')
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
 # writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
 
 # #%%
 # #GNN with Seeds
+# #Construct matrix
+# featureForClustering = baseData[mf].to_numpy()
+# adjMx = constructAdjMx(k,euclidPath,m,featureForClustering,oaIndex)
+# edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
+
+# #GNN with Seeds
 # expNum += 1
+# print('Experiment : ' + str(expNum))
 # method = 'GNN-Seeds'
 # _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
-# predVector, infTime = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+# proceedGNNSeeds = False
+# while proceedGNNSeeds == False:
+#     predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+#     if float(losses[-1]) / float(losses[0]) < 0.95:
+#         proceedGNNSeeds = True
+# print()
+# print('Evaluating GNN Seeds')
 # absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
 # writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
