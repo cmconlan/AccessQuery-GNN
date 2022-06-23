@@ -116,6 +116,8 @@ for p in experimentParams['POIsToTest']:
                         proceedGNNSimpl = False
                         while proceedGNNSimpl == False:
                             predVector, infTime, losses = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+                            print(losses)
+                            print(type(losses))
                             if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
                                 proceedMLP = True
                         print()
