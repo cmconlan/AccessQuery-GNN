@@ -68,6 +68,7 @@ device = experimentParams['device']
 
 #%%
 expNum = 0
+experimentsTimeOut = []
 #Use placehold value in first instance
 ss = 0.5
 for p in experimentParams['POIsToTest']:
@@ -98,11 +99,16 @@ for p in experimentParams['POIsToTest']:
                         expNum += 1
                         print('Experiment : ' + str(expNum))
                         method = 'Regr-MLP'
+                        timeTried = 0
                         proceedMLP = False
                         while proceedMLP == False:
-                            predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)                                
+                            predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+                            timeTried += 1
                             if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
                                 proceedMLP = True
+                            if timeTried == 10:
+                                proceedMLP = True
+                                experimentsTimeOut.append(expNum)
                         print()
                         print('Evaluating MLP')
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
@@ -113,13 +119,16 @@ for p in experimentParams['POIsToTest']:
                         expNum += 1
                         print('Experiment : ' + str(expNum))
                         method = 'GNN-Simple'
+                        timeTried = 0
                         proceedGNNSimpl = False
                         while proceedGNNSimpl == False:
                             predVector, infTime, losses = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
-                            print(losses)
-                            print(type(losses))
+                            timeTried += 1
                             if float(losses[-1]) / float(losses[0]) < 0.95:
                                 proceedGNNSimpl = True
+                            if timeTried == 10:
+                                proceedGNNSimpl = True
+                                experimentsTimeOut.append(expNum)
                         print()
                         print('Evaluating GNN Simple')
                         absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
@@ -138,17 +147,24 @@ for p in experimentParams['POIsToTest']:
                             expNum += 1
                             print('Experiment : ' + str(expNum))
                             method = 'GNN-Seeds'
+                            timeTried = 0
                             _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
                             proceedGNNSeeds = False
                             while proceedGNNSeeds == False:
                                 predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+                                timeTried += 1
                                 if float(losses[-1]) / float(losses[0]) < 0.95:
                                     proceedGNNSeeds = True
+                                if timeTried == 10:
+                                    proceedGNNSeeds = True
+                                    experimentsTimeOut.append(expNum)
                             print()
                             print('Evaluating GNN Seeds')
                             absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
                             writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
-                        
+
+print('The following experiments timed out:')
+print(experimentsTimeOut)                        
 
 #%%
 # expNum = 0
