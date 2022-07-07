@@ -6,7 +6,7 @@ import sqlite3
 import statsmodels.api as sm
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from Scripts.activeLearningStrategies import basicClustering, distCluster
+from Scripts.activeLearningStrategies import basicClustering, distCluster, degreeCentrality, eigenCentrality
 
 #%%
 
@@ -232,7 +232,12 @@ def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf):
     #dist clustering
     elif al == 2:
         trainRecords = distCluster(b,baseData)
-    
+    #Distance centrality
+    elif al == 3:
+        trainRecords = degreeCentrality(b,baseData)
+    #Eigenvector Centrality
+    elif al == 4:
+        trainRecords = eigenCentrality(b,baseData)
     #Randomly select seed records from probe
     seefCutOff = int(b * ss)
     seedRecords = random.sample(trainRecords, seefCutOff)

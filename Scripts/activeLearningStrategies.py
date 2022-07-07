@@ -1,4 +1,5 @@
 import numpy as np
+import networkx as nx
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances_argmin_min
@@ -44,3 +45,35 @@ def distCluster(b,inputData):
         oasSelected.append(inputData.iloc[itemindex]['avgEuclidDist'].idxmax())
 
     return oasSelected
+
+#%%
+
+def degreeCentrality(b,adjMx):
+    G = nx.DiGraph(adjMx)
+    nodesL = []
+
+    for i in range(b):
+        dc = nx.degree_centrality(G)
+        dcSort = dict(sorted(dc.items(), key=lambda item: item[1], reverse=True))
+        nextNode = next(iter(dcSort))
+        nodesL.append(nextNode)
+        del dcSort[nextNode]
+        G.remove_node(nextNode)
+
+    return nodesL
+
+#%%
+
+def eigenCentrality(b,adjMx):
+    G = nx.DiGraph(adjMx)
+    nodesL = []
+
+    for i in range(b):
+        dc = nx.eigenvector_centrality_numpy(G, weight = 'weight')
+        dcSort = dict(sorted(dc.items(), key=lambda item: item[1], reverse=True))
+        nextNode = next(iter(dcSort))
+        nodesL.append(nextNode)
+        del dcSort[nextNode]
+        G.remove_node(nextNode)
+
+    return nodesL
