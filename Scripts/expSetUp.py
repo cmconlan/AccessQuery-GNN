@@ -218,10 +218,7 @@ def constructAdjMx(k,euclidPath,mxType,oaFeatureVec,oaIndex):
 
 #%%
 
-def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf):
-
-    #Randomly select nodes for probe split
-    b = int(len(baseData) * pb)
+def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b):
     
     #Random
     if al == 0:
