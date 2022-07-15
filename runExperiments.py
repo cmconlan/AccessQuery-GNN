@@ -143,11 +143,6 @@ hidden2GNN = experimentParams['GNNParameters']['hidden2GNN']
 epochsGNN = experimentParams['GNNParameters']['epochs']
 device = experimentParams['device']
 
-if :
-    useGPU = True
-else:
-    useGPU = False
-
 #Baseline Param
 
 data_dir = ''
