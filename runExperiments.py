@@ -90,8 +90,8 @@ print('--Modules Imported--')
 
 # Import experiment yaml
 
-ymlFile = 'exp1'
-#ymlFile = sys.argv[1]
+#ymlFile = 'exp1'
+ymlFile = sys.argv[1]
 print('YAML File : ' + str(ymlFile))
 
 with open('Experiments/'+ymlFile + '.yml', 'r') as stream:
@@ -143,6 +143,10 @@ hidden2GNN = experimentParams['GNNParameters']['hidden2GNN']
 epochsGNN = experimentParams['GNNParameters']['epochs']
 device = experimentParams['device']
 
+if :
+    useGPU = True
+else:
+    useGPU = False
 
 #Baseline Param
 
@@ -285,7 +289,7 @@ for p in experimentParams['POIsToTest']:
                                 valMask.append(False)
                                 
                         t0 = time.time()
-                        vatTrainer = VATTrainer(data_dir,results_dir,num_train,max_iters,num_trials,x, y, trainMask, testMask , valMask, valTestMask, num_unlabeled = len(baseData) - b,batch_unlabeled = len(baseData) - b)
+                        vatTrainer = VATTrainer(data_dir,results_dir,num_train,max_iters,num_trials,x, y, trainMask, testMask , valMask, valTestMask, device == 'cuda', num_unlabeled = len(baseData) - b,batch_unlabeled = len(baseData) - b)
                         vatTrainer.run_trials()
                         predVector = vatTrainer.model.forward(x[testMask]).eval()
                         t1 = time.time()
