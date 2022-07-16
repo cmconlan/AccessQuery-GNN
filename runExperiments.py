@@ -154,8 +154,10 @@ max_iters = 25
 #%%
 expNum = 0
 experimentsTimeOut = []
+experimentsFailed = []
 #Use placehold value in first instance
-ss = 0.5
+ss = experimentParams['seedSplitsToTest'][0]
+
 for p in experimentParams['POIsToTest']:
     for s in experimentParams['stratemsToTest']:
         #Get base training data (e.g., OAs with relevant features from POI and stratum)
@@ -181,120 +183,162 @@ for p in experimentParams['POIsToTest']:
                         expNum += 1
                         print('Experiment : ' + str(expNum))
                         method = 'Regr-OLS'
-                        predVector, infTime = OLSRegression(x,y,trainMask,testMask)
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        try:
+                            predVector, infTime = OLSRegression(x,y,trainMask,testMask)
+                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        except:
+                            experimentsFailed.append(expNum)
                     if experimentParams['modelsToRun']['MLP']:
                         expNum += 1
                         print('Experiment : ' + str(expNum))
                         method = 'Regr-MLP'
-                        timeTried = 0
-                        proceedMLP = False
-                        while proceedMLP == False:
-                            predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
-                            timeTried += 1
-                            if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
-                                proceedMLP = True
-                            if timeTried == 10:
-                                proceedMLP = True
-                                experimentsTimeOut.append(expNum)
-                        print()
-                        print('Evaluating MLP')
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
-                    
+                        try:
+                            timeTried = 0
+                            proceedMLP = False
+                            while proceedMLP == False:
+                                predVector, infTime, losses = MLPRegression(x,y,trainMask,testMask,hiddenMLP,epochsMLP, device)
+                                timeTried += 1
+                                if float(losses[-1].cpu().detach().numpy()) / float(losses[0].cpu().detach().numpy()) < 0.95:
+                                    proceedMLP = True
+                                if timeTried == 10:
+                                    proceedMLP = True
+                                    experimentsTimeOut.append(expNum)
+                            print()
+                            print('Evaluating MLP')
+                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        except:
+                            experimentsFailed.append(expNum)
                     if experimentParams['modelsToRun']['GNNSimple']:
                         #GNN Simple
                         expNum += 1
                         print('Experiment : ' + str(expNum))
                         method = 'GNN-Simple'
-                        timeTried = 0
-                        proceedGNNSimpl = False
-                        while proceedGNNSimpl == False:
-                            predVector, infTime, losses = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
-                            timeTried += 1
-                            if float(losses[-1]) / float(losses[0]) < 0.95:
-                                proceedGNNSimpl = True
-                            if timeTried == 10:
-                                proceedGNNSimpl = True
-                                experimentsTimeOut.append(expNum)
-                        print()
-                        print('Evaluating GNN Simple')
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        try:
+                            timeTried = 0
+                            proceedGNNSimpl = False
+                            while proceedGNNSimpl == False:
+                                predVector, infTime, losses = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+                                timeTried += 1
+                                if float(losses[-1]) / float(losses[0]) < 0.95:
+                                    proceedGNNSimpl = True
+                                if timeTried == 10:
+                                    proceedGNNSimpl = True
+                                    experimentsTimeOut.append(expNum)
+                            print()
+                            print('Evaluating GNN Simple')
+                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        except:
+                            experimentsFailed.append(expNum)
                     if experimentParams['modelsToRun']['GNNSeeds']:
-                        for ss in experimentParams['seedSplitsToTest']:
-                            #Construct training matrices
-                            x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b)
-                            
-                            #Construct matrix
-                            featureForClustering = baseData[mf].to_numpy()
-                            adjMx = constructAdjMx(k,euclidPath,m,featureForClustering,oaIndex)
-                            edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
-                            
+                        if len(experimentParams['seedSplitsToTest']) > 1:
+                            for ss in experimentParams['seedSplitsToTest']:
+                                #Construct training matrices
+                                x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b)
+                                
+                                #Construct matrix
+                                featureForClustering = baseData[mf].to_numpy()
+                                adjMx = constructAdjMx(k,euclidPath,m,featureForClustering,oaIndex)
+                                edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
+                                
+                                #GNN with Seeds
+                                expNum += 1
+                                print('Experiment : ' + str(expNum))
+                                method = 'GNN-Seeds'
+                                try:
+                                    timeTried = 0
+                                    _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
+                                    proceedGNNSeeds = False
+                                    while proceedGNNSeeds == False:
+                                        predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+                                        timeTried += 1
+                                        if float(losses[-1]) / float(losses[0]) < 0.95:
+                                            proceedGNNSeeds = True
+                                        if timeTried == 10:
+                                            proceedGNNSeeds = True
+                                            experimentsTimeOut.append(expNum)
+                                    print()
+                                    print('Evaluating GNN Seeds')
+                                    absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                                    writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                                except:
+                                    experimentsFailed.append(expNum)
+                        else:
                             #GNN with Seeds
                             expNum += 1
                             print('Experiment : ' + str(expNum))
                             method = 'GNN-Seeds'
-                            timeTried = 0
-                            _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
-                            proceedGNNSeeds = False
-                            while proceedGNNSeeds == False:
-                                predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
-                                timeTried += 1
-                                if float(losses[-1]) / float(losses[0]) < 0.95:
-                                    proceedGNNSeeds = True
-                                if timeTried == 10:
-                                    proceedGNNSeeds = True
-                                    experimentsTimeOut.append(expNum)
-                            print()
-                            print('Evaluating GNN Seeds')
-                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                            try:
+                                timeTried = 0
+                                _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
+                                proceedGNNSeeds = False
+                                while proceedGNNSeeds == False:
+                                    predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+                                    timeTried += 1
+                                    if float(losses[-1]) / float(losses[0]) < 0.95:
+                                        proceedGNNSeeds = True
+                                    if timeTried == 10:
+                                        proceedGNNSeeds = True
+                                        experimentsTimeOut.append(expNum)
+                                print()
+                                print('Evaluating GNN Seeds')
+                                absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                                writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                            except:
+                                experimentsFailed.append(expNum)
                     if experimentParams['modelsToRun']['COREG']:
                         expNum += 1
                         print('Experiment : ' + str(expNum))
                         method = 'COREG'
-                        
-                        t0 = time.time()
-                        coregTrainer = CoregTrainer(data_dir,results_dir,num_train,num_trials,x,y,trainMask,testMask)
-                        coregTrainer.run_trials()
-                        predVector = coregTrainer.test_hat
-                        t1 = time.time()
-                        infTime = t1 - t0
-                        
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        try:
+                            t0 = time.time()
+                            coregTrainer = CoregTrainer(data_dir,results_dir,num_train,num_trials,x,y,trainMask,testMask)
+                            coregTrainer.run_trials()
+                            predVector = coregTrainer.test_hat
+                            t1 = time.time()
+                            infTime = t1 - t0
+                            
+                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        except:
+                            experimentsFailed.append(expNum)
                     if experimentParams['modelsToRun']['VAT']:
                         expNum += 1
                         print('Experiment : ' + str(expNum))
                         method = 'VAT'
-                        
-                        val = int(b*0.1)
-                        valRecords = random.sample(range(b), val)
-                        valMask = []
-                        valTestMask = []
-
-                        for i in range(b):
-                            if i in valRecords:
-                                valMask.append(True)
-                                valTestMask.append(False)
-                            else:
-                                valTestMask.append(True)
-                                valMask.append(False)
-                                
-                        t0 = time.time()
-                        vatTrainer = VATTrainer(data_dir,results_dir,num_train,max_iters,num_trials,x, y, trainMask, testMask , valMask, valTestMask, device == 'cuda', num_unlabeled = len(baseData) - b,batch_unlabeled = len(baseData) - b)
-                        vatTrainer.run_trials()
-                        predVector = vatTrainer.model.forward(x[testMask]).eval()
-                        t1 = time.time()
-                        infTime = t1 - t0
-                        
-                        absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
-                        writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        try:
+                            val = int(b*0.1)
+                            valRecords = random.sample(range(b), val)
+                            valMask = []
+                            valTestMask = []
+    
+                            for i in range(b):
+                                if i in valRecords:
+                                    valMask.append(True)
+                                    valTestMask.append(False)
+                                else:
+                                    valTestMask.append(True)
+                                    valMask.append(False)
+                                    
+                            t0 = time.time()
+                            vatTrainer = VATTrainer(data_dir,results_dir,num_train,max_iters,num_trials,x, y, trainMask, testMask , valMask, valTestMask, device == 'cuda', num_unlabeled = len(baseData) - b,batch_unlabeled = len(baseData) - b)
+                            vatTrainer.run_trials()
+                            predVector = vatTrainer.model.forward(x[testMask]).eval()
+                            t1 = time.time()
+                            infTime = t1 - t0
+                            
+                            absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum)
+                            writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                        except:
+                            experimentsFailed.append(expNum)
 
 print('The following experiments timed out:')
-print(experimentsTimeOut)                        
+print(experimentsTimeOut)
+print()
+print('The following experiments failed:')
+print(experimentsFailed)
 
 #%%
 # expNum = 0
