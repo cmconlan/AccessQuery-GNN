@@ -70,12 +70,11 @@ oaInfoLoc = 'Data/oa_info.csv'
 travel_speed = 4.5
 
 #listLAD11CD = ['E08000025','E08000026','E08000027','E08000028','E08000029','E08000030','E08000031']
-listLAD11CD = ['E08000025','E08000026']
+listLAD11CD = ['E08000026','E08000025']
 
 #%%
 for region in listLAD11CD:
-    print(region)
-    
+
     print('REGION : ' + str(region))
     
     #Get west midlands shape files
@@ -110,26 +109,26 @@ for region in listLAD11CD:
     
     # Use node2vec to calculate node embeddings
     
-    G = nx.DiGraph(euclidMx)
+    # G = nx.DiGraph(euclidMx)
     
-    g_emb = n2v(
-      G,
-      dimensions=16,
-      weight_key = 'weight'
-    )
+    # g_emb = n2v(
+    #   G,
+    #   dimensions=16,
+    #   weight_key = 'weight'
+    # )
     
-    mdl = g_emb.fit(
-        vector_size = 16,
-        window=WINDOW,
-        min_count=MIN_COUNT,
-        batch_words=BATCH_WORDS
-    )
+    # mdl = g_emb.fit(
+    #     vector_size = 16,
+    #     window=WINDOW,
+    #     min_count=MIN_COUNT,
+    #     batch_words=BATCH_WORDS
+    # )
     
-    print('NODE2VEC for euclid')
+    # print('NODE2VEC for euclid')
     
     # Ouput
     
-    outputNumpy('Data/adjMx/' + str(region) + '/euclidEmbeddings.csv', mdl.wv.vectors)
+    # outputNumpy('Data/adjMx/' + str(region) + '/euclidEmbeddings.csv', mdl.wv.vectors)
     
     #Normalize matrix
     
@@ -154,17 +153,17 @@ for region in listLAD11CD:
     
     g_emb = n2v(
       G,
-      dimensions=16,
+      dimensions=6,
       weight_key = 'weight'
     )
     
     mdl = g_emb.fit(
-        vector_size = 16,
+        vector_size = 6,
         window=WINDOW,
         min_count=MIN_COUNT,
         batch_words=BATCH_WORDS
     )
-    
+        
     print('NODE2VEC for gaus adj')
     
     # Output
