@@ -441,6 +441,18 @@ for i in range(experimentParams['trials']):
                             try:
                                 t0 = time.time()
                                 tf.reset_default_graph()
+                                
+                                X_labeled = x[trainMask]
+                                X_unlabeled = x[testMask]
+                                #y_labeled = y[trainMask].reshape(-1, 1)
+                                #y_unlabeled = y[testMask].reshape(-1, 1)
+                                y_labeled = y[trainMask]
+                                y_unlabeled = y[testMask]
+                                X_test = X_labeled[valTestMask]
+                                y_test = y_labeled[valTestMask]
+                                X_val = X_labeled[valMask]
+                                y_val = y_labeled[valMask]
+                                
                                 test_loss, best_val_loss, predictionStudent = optimize_mean_teacher(X_labeled, y_labeled, X_unlabeled, y_unlabeled,X_val, y_val,X_test, y_test)
                                 tf.reset_default_graph()
                                 t1 = time.time()
