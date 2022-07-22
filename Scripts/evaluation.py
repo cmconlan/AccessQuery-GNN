@@ -6,12 +6,11 @@ import pandas as pd
 import geopandas as gpd
 
 #%%
-
 #Get performance statistics
 #Output performance statistic to central repository
 #Plot access on map and output
 
-def getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum):
+def getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum, area):
 
     predInd = 0
     predicted = []
@@ -25,23 +24,23 @@ def getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trai
     
     predicted = np.array(predicted)
     
-    y = np.squeeze(scalerY.inverse_transform(y.reshape(1, -1)),axis = 0)
+    y_hat = np.squeeze(scalerY.inverse_transform(y.reshape(1, -1)),axis = 0)
     
     # Get absolute error
-    error = abs(y - predicted)
+    error = abs(y_hat - predicted)
     absError = error.mean()
     
     # Get percentage error
-    errorPct = (abs(y - predicted)) / y
+    errorPct = (abs(y_hat - predicted)) / y_hat
     absErrorPcnt = errorPct.mean()
     
     #Jains error
-    jainActual = (y.sum() ** 2) / ((y*y).sum() * y.shape[0])
+    jainActual = (y_hat.sum() ** 2) / ((y_hat*y_hat).sum() * y_hat.shape[0])
     jainPred = (predicted.sum() ** 2) / ((predicted*predicted).sum() * predicted.shape[0])
     jainsError = jainActual - jainPred
     
     #Get correlation coefficient
-    correation, corrConfidence = pearsonr(predicted,y)
+    correation, corrConfidence = pearsonr(predicted,y_hat)
     
     #OUTPUT PLOTS
     
@@ -52,7 +51,7 @@ def getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trai
         
     #read in shape file
     wm_oas = gpd.read_file(shpFileLoc)
-    wm_oas = wm_oas[wm_oas['LAD11CD'] == 'E08000026']
+    wm_oas = wm_oas[wm_oas['LAD11CD'] == area]
     
     wm_oas = wm_oas.merge(baseData[['oa_id','avgAccessCost','predictedAccessCost']], left_on = 'OA11CD', right_on = 'oa_id', how = 'left')
     
