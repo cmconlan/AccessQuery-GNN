@@ -133,8 +133,8 @@ print('--Modules Imported--')
 
 #%% Import experiment yaml
 
-ymlFile = 'exp1'
-#ymlFile = sys.argv[1]
+#ymlFile = 'exp1'
+ymlFile = sys.argv[1]
 print('YAML File : ' + str(ymlFile))
 
 with open('Experiments/'+ymlFile + '.yml', 'r') as stream:
