@@ -6,97 +6,26 @@ import sqlite3
 import statsmodels.api as sm
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from Scripts.activeLearningStrategies import basicClustering, distCluster, degreeCentrality, eigenCentrality
+from Scripts.activeLearningStrategies import basicClustering, distCluster, degreeCentrality, eigenCentrality, featureCluster, embedCluster
+from math import radians, cos, sin, asin, sqrt
 
-#%%
+#Function to get euclidean distance
+def haversine(lon1, lat1, lon2, lat2):
+    """
+    Calculate the great circle distance between two points
+    on the earth (specified in decimal degrees)
+    """
+    # convert decimal degrees to radians
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    # haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a))
+    # Radius of earth in kilometers is 6371
+    km = 6371* c
+    return km
 
-# def getTestTrainingData(p,s,inputData,oaIndex,probeBudget,sampleRate,seedSplit,features,database,al,target='avgAccessCost'):
-    
-#     #Randomly select nodes for probe split
-#     b = int(len(inputData) * probeBudget)
-    
-#     #Random
-#     if al == 0:
-#         trainRecords = random.sample(range(len(inputData)), b)
-#     #basic clustering
-#     elif al == 1:
-#         trainRecords = basicClustering(b,inputData,oaIndex)
-#     #dist clustering
-#     elif al == 2:
-#         trainRecords = distCluster(b,inputData)
-#     #TODO: consider if we can take this out of this function and put it into a later function
-#     #Randomly select seed records from probe
-#     seefCutOff = int(b * seedSplit)
-#     seedRecords = random.sample(trainRecords, seefCutOff)
-    
-#     # Get y based on sampling rate
-    
-#     #Get all trips for given POI type
-#     # cnx = sqlite3.connect(dbLoc)
-#     # sqlQuery = 'select a.oa_id, a.trip_id, b.stratum from otp_trips as a left join trip_strata as b on a.trip_id = b.trip_id where oa_id in {} and poi_id in (select distinct poi_id from poi where type = "{}");'.format(tuple(list(set(oaIndex))),p)
-#     # allPOItrips = pd.read_sql_query(sqlQuery, cnx)
-    
-#     sqlQuery = "select a.oa_id, a.trip_id, b.stratum from model_may2022.otp_trips as a left join model_may2022.trips as b on a.trip_id = b.trip_id where a.oa_id in {} and a.poi_id in (select distinct id from semantic.poi where type = '{}');".format(tuple(list(set(oaIndex))),p)
-#     allPOItrips = database.execute_sql(sqlQuery, False, True)
-
-#     queryTripIds = []
-
-#     #Randomly select trips from within the time stratum to sample the access cost
-#     for oa in oaIndex:
-#         oaTrips = allPOItrips[(allPOItrips['oa_id'] == oa) & (allPOItrips['stratum'] == s)]
-#         probeCutOff = int(len(oaTrips) * sampleRate)
-#         probeRecords = random.sample(range(len(oaTrips)), probeCutOff)
-#         queryTripIds = queryTripIds + list(oaTrips['trip_id'].iloc[probeRecords])
-    
-#     #Get trip details
-#     # sqlQuery = 'select total_time, initial_wait_time - 3600 as initial_wait_corrected, transit_time, fare, num_transfers, trip_id from otp_results where trip_id in {}'.format(tuple(list(set(queryTripIds))))
-#     # tripsResults = pd.read_sql_query(sqlQuery, cnx)
-    
-#     #Get trip details
-#     sqlQuery = 'select total_time, initial_wait_time - 3600 as initial_wait_corrected, transit_time, fare, num_transfers, trip_id from results_may2022.results_full where trip_id in {}'.format(tuple(list(set(queryTripIds))))
-#     tripsResults = database.execute_sql(sqlQuery, False, True)
-    
-#     #Calculate access costs
-#     tripsResults['sampleAccessCost'] = (( 1.5 * (tripsResults['total_time'] + tripsResults['initial_wait_corrected'])) - (0.5 * tripsResults['transit_time']) + ((tripsResults['fare'] * 3600) / 6.7) + (10 * tripsResults['num_transfers']) ) / 60
-#     tripsResults = tripsResults.merge(allPOItrips[['oa_id','trip_id']],left_on = 'trip_id', right_on = 'trip_id', how = 'left')
-#     inputData['sampleAccessCost'] = inputData['oa_id'].map(tripsResults.groupby('oa_id')['sampleAccessCost'].mean().to_dict()) 
-
-#     # Normalize features
-#     scalerX = MinMaxScaler()
-#     scalerX.fit(np.array(inputData[features]))
-#     x = scalerX.transform(inputData[features])
-#     y = np.array(inputData['avgAccessCost'])
-#     ySample = np.array(inputData['sampleAccessCost'])
-    
-#     #Generate test and training masks
-#     testMask = []
-#     trainMask = []
-
-#     for i in range(len(inputData)):
-#         if i in trainRecords:
-#             testMask.append(False)
-#             trainMask.append(True)
-#         else:
-#             testMask.append(True)
-#             trainMask.append(False)
-
-#     seedMask = []
-
-#     for i in range(len(inputData)):
-#         if i in seedRecords:
-#             seedMask.append(True)
-#         else:
-#             seedMask.append(False)
-
-#     seedTrainMask = []
-
-#     for i in range(len(inputData)):
-#         if (i in trainRecords) and (i not in seedRecords):
-#             seedTrainMask.append(True)
-#         else:
-#             seedTrainMask.append(False)
-            
-#     return x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, inputData, tripsResults.groupby('oa_id').size()[trainMask].sum(), len(tripsResults)
 
 #%% Get predicted access cost based on probe data
 
@@ -125,17 +54,7 @@ def appendPredictedCostToFeatures(inputData,mask,features,x,target='sampleAccess
 
 #%%
 
-#Function - Graph Construction
-
-#EuclidMinMax
-#EuclidGaussian
-#K-Means Binary
-#K-Means Euclidean
-
-#%%
-
 #Given base data and euclid matrix
-
 
 
 def constructAdjMx(k,euclidPath,mxType,oaFeatureVec,oaIndex):
@@ -161,64 +80,64 @@ def constructAdjMx(k,euclidPath,mxType,oaFeatureVec,oaIndex):
         adjMx = 1 - (euclidMx - euclidMx.min()) / (euclidMx.max() - euclidMx.min())
     
     
-    elif mxType == 2:
-        scaler = StandardScaler()
-        scaled_features = scaler.fit_transform(oaFeatureVec)
+    # elif mxType == 2:
+    #     scaler = StandardScaler()
+    #     scaled_features = scaler.fit_transform(oaFeatureVec)
         
-        nClusters = int(scaled_features.shape[0]/20)
+    #     nClusters = int(scaled_features.shape[0]/20)
         
-        kmeans = KMeans(init="random",n_clusters=nClusters,n_init=10,max_iter=500,random_state=42)
-        kmeans.fit(scaled_features)
+    #     kmeans = KMeans(init="random",n_clusters=nClusters,n_init=10,max_iter=500,random_state=42)
+    #     kmeans.fit(scaled_features)
         
-        clusterLabels = kmeans.labels_
+    #     clusterLabels = kmeans.labels_
         
-        adjMx = np.zeros((len(oaIndex),len(oaIndex)))
+    #     adjMx = np.zeros((len(oaIndex),len(oaIndex)))
         
-        i = 0
-        for oaI in oaIndex:
-            j = 0
-            for oaJ in oaIndex:
-                if oaI == oaJ:
-                    adjMx[i,j] = 1
-                else:
-                    if clusterLabels[i] == clusterLabels[j]:
-                        adjMx[i,j] = 1
-                    else:
-                        adjMx[i,j] = 0
-                j += 1
-            i += 1
+    #     i = 0
+    #     for oaI in oaIndex:
+    #         j = 0
+    #         for oaJ in oaIndex:
+    #             if oaI == oaJ:
+    #                 adjMx[i,j] = 1
+    #             else:
+    #                 if clusterLabels[i] == clusterLabels[j]:
+    #                     adjMx[i,j] = 1
+    #                 else:
+    #                     adjMx[i,j] = 0
+    #             j += 1
+    #         i += 1
         
     
-    elif mxType == 3:
-        scaler = StandardScaler()
-        scaled_features = scaler.fit_transform(oaFeatureVec)
+    # elif mxType == 3:
+    #     scaler = StandardScaler()
+    #     scaled_features = scaler.fit_transform(oaFeatureVec)
         
-        nClusters = int(scaled_features.shape[0]/40)
+    #     nClusters = int(scaled_features.shape[0]/40)
         
-        kmeans = KMeans(init="random",n_clusters=nClusters,n_init=10,max_iter=1000,random_state=42)
-        kmeans.fit(scaled_features)
+    #     kmeans = KMeans(init="random",n_clusters=nClusters,n_init=10,max_iter=1000,random_state=42)
+    #     kmeans.fit(scaled_features)
         
-        clusterLabels = kmeans.labels_
+    #     clusterLabels = kmeans.labels_
         
-        adjMx = np.zeros((len(oaIndex),len(oaIndex)))
+    #     adjMx = np.zeros((len(oaIndex),len(oaIndex)))
         
-        countI = 0
-        for i in oaIndex:
-            oaCluster = clusterLabels[countI] 
-            clusterIndex = np.where(clusterLabels == oaCluster)[0]
-            oaDistances = euclidMx[countI,clusterIndex]
-            norm = 1 - (oaDistances - oaDistances.min()) / (oaDistances.max() - oaDistances.min())
-            countJ = 0
-            for j in clusterIndex:
-                adjMx[countI,j] = norm[countJ]
-                countJ += 1
-            countI += 1
+    #     countI = 0
+    #     for i in oaIndex:
+    #         oaCluster = clusterLabels[countI] 
+    #         clusterIndex = np.where(clusterLabels == oaCluster)[0]
+    #         oaDistances = euclidMx[countI,clusterIndex]
+    #         norm = 1 - (oaDistances - oaDistances.min()) / (oaDistances.max() - oaDistances.min())
+    #         countJ = 0
+    #         for j in clusterIndex:
+    #             adjMx[countI,j] = norm[countJ]
+    #             countJ += 1
+    #         countI += 1
 
     return adjMx
 
 #%%
 
-def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b):
+def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b,area):
     
     #Random
     if al == 0:
@@ -235,6 +154,10 @@ def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b):
     #Eigenvector Centrality
     elif al == 4:
         trainRecords = eigenCentrality(b,baseData)
+    elif al == 5:
+        trainRecords = featureCluster(b,baseData,mf)
+    elif al == 6:
+        trainRecords = embedCluster(b,area)
     #Randomly select seed records from probe
     seefCutOff = int(b * ss)
     seedRecords = random.sample(trainRecords, seefCutOff)

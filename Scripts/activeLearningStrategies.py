@@ -77,3 +77,74 @@ def eigenCentrality(b,adjMx):
         G.remove_node(nextNode)
 
     return nodesL
+
+#%%
+
+#cluster feature space
+def featureCluster(b,inputData,mf):
+    
+    clusterFeatures = np.array(inputData[mf])
+    
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(clusterFeatures)
+    
+    kmeans = KMeans(init="random",n_clusters=b,n_init=10,max_iter=300,random_state=42)
+    kmeans.fit(scaled_features)
+    
+    scaled_features = scaled_features.copy(order='C')
+    
+    closest, _ = pairwise_distances_argmin_min(kmeans.cluster_centers_, scaled_features)
+    
+    return list(closest)
+
+#%%
+#cluster node embedding
+
+def embedCluster(b,area,embedType = 'gauss'):
+    
+    if embedType == 'euclid':
+        clusterFeatures = np.load('Data/adjMx/' + str(area) + '/euclidEmbeddings.csv')
+    elif embedType == 'gauss':
+        clusterFeatures = np.load('Data/adjMx/' + str(area) + '/adjMxEmbeddings.csv')
+    
+    scaler = StandardScaler()
+    scaled_features = scaler.fit_transform(clusterFeatures)
+    
+    kmeans = KMeans(init="random",n_clusters=b,n_init=10,max_iter=300,random_state=42)
+    kmeans.fit(scaled_features)
+    
+    scaled_features = scaled_features.copy(order='C')
+    
+    closest, _ = pairwise_distances_argmin_min(kmeans.cluster_centers_, scaled_features)
+    
+    return list(closest)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
