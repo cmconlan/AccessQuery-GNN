@@ -91,7 +91,7 @@ class CoregTrainer:
         np.save(os.path.join(self.results_dir, 'results/mses_test'),
                 self.coreg_model.mses_test)
 
-def runLabelProp(x,y,trainMask,testMask,valTestMask,valMask):
+def runLabelProp(x,y,trainMask,testMask,valTestMask,valMask,val):
     
     X_labeled = x[trainMask]
     X_unlabeled = x[testMask]
@@ -243,7 +243,7 @@ for i in range(experimentParams['trials']):
                         #Construct training matrices
                         # x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b,area)
                         
-                        testMask, trainMask, seedMask, seedTrainMask, valMask, valTestMask, numSPQ = getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults)
+                        testMask, trainMask, seedMask, seedTrainMask, valMask, valTestMask, val, numSPQ = getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults)
                         
                         
                         # val = int(b*0.1)
@@ -436,7 +436,7 @@ for i in range(experimentParams['trials']):
                             method = 'LabProp'
                             try:
                                 t0 = time.time()
-                                predVector = runLabelProp(x,y,trainMask,testMask,valTestMask,valMask)
+                                predVector = runLabelProp(x,y,trainMask,testMask,valTestMask,valMask,val)
                                 t1 = time.time()
                                 infTime = t1 - t0
                                 absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum,area)

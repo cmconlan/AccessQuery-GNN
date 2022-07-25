@@ -331,4 +331,4 @@ def getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults):
             valTestMask.append(True)
             valMask.append(False)
     
-    return testMask, trainMask, seedMask, seedTrainMask, valMask, valTestMask, tripsResults.groupby('oa_id').size()[trainMask].sum()
+    return testMask, trainMask, seedMask, seedTrainMask, valMask, valTestMask, val, tripsResults.groupby('oa_id').size()[trainMask].sum()
