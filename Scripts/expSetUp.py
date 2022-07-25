@@ -137,7 +137,134 @@ def constructAdjMx(k,euclidPath,mxType,oaFeatureVec,oaIndex):
 
 #%%
 
-def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b,area):
+# def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b,area):
+    
+#     #Random
+#     if al == 0:
+#         trainRecords = random.sample(range(len(baseData)), b)
+#     #basic clustering
+#     elif al == 1:
+#         trainRecords = basicClustering(b,baseData,oaIndex)
+#     #dist clustering
+#     elif al == 2:
+#         trainRecords = distCluster(b,baseData)
+#     #Distance centrality
+#     elif al == 3:
+#         trainRecords = degreeCentrality(b,baseData)
+#     #Eigenvector Centrality
+#     elif al == 4:
+#         trainRecords = eigenCentrality(b,baseData)
+#     elif al == 5:
+#         trainRecords = featureCluster(b,baseData,mf)
+#     elif al == 6:
+#         trainRecords = embedCluster(b,area)
+#     #Randomly select seed records from probe
+#     seefCutOff = int(b * ss)
+#     seedRecords = random.sample(trainRecords, seefCutOff)
+    
+#     cnx = sqlite3.connect(dbLoc)
+#     sqlQuery = 'select oa_id, trip_id, stratum from trips where oa_id in {} and poi_id in {} and stratum = "{}";'.format(tuple(list(set(oaIndex))),tuple(list(set(poiInd.astype(str)))),s)
+#     allPOItrips = pd.read_sql_query(sqlQuery, cnx)
+    
+#     queryTripIds = []
+    
+#     #Randomly select trips from within the time stratum to sample the access cost
+#     for oa in oaIndex:
+#         oaTrips = allPOItrips[(allPOItrips['oa_id'] == oa)]
+#         probeCutOff = int(len(oaTrips) * sr)
+#         probeRecords = random.sample(range(len(oaTrips)), probeCutOff)
+#         queryTripIds = queryTripIds + list(oaTrips['trip_id'].iloc[probeRecords])
+    
+#     #Get trip details
+#     sqlQuery = 'select total_time, initial_wait_corrected, transit_time, fare, num_transfers, trip_id from results_full where trip_id in {}'.format(tuple(list(set(queryTripIds))))
+#     tripsResults = pd.read_sql_query(sqlQuery, cnx)
+    
+#     #Calculate access costs
+#     tripsResults['sampleAccessCost'] = (( 1.5 * (tripsResults['total_time'] + tripsResults['initial_wait_corrected'])) - (0.5 * tripsResults['transit_time']) + ((tripsResults['fare'] * 3600) / 6.7) + (10 * tripsResults['num_transfers']) ) / 60
+    
+#     tripsResults = tripsResults.merge(allPOItrips[['oa_id','trip_id']],left_on = 'trip_id', right_on = 'trip_id', how = 'left')
+    
+#     baseData['sampleAccessCost'] = baseData['oa_id'].map(tripsResults.groupby('oa_id')['sampleAccessCost'].mean().to_dict()) 
+    
+#     # Normalize features
+#     scalerX = MinMaxScaler()
+#     x = scalerX.fit_transform(np.array(baseData[mf]))
+    
+#     scalerY = MinMaxScaler()
+#     y = scalerY.fit_transform(np.array(baseData['avgAccessCost']).reshape(-1, 1)).squeeze()
+    
+#     scalerYSample = MinMaxScaler()
+#     ySample = scalerYSample.fit_transform(np.array(baseData['sampleAccessCost']).reshape(-1, 1)).squeeze()
+    
+    
+#     #Generate test and training masks
+#     testMask = []
+#     trainMask = []
+    
+#     for i in range(len(baseData)):
+#         if i in trainRecords:
+#             testMask.append(False)
+#             trainMask.append(True)
+#         else:
+#             testMask.append(True)
+#             trainMask.append(False)
+    
+#     seedMask = []
+    
+#     for i in range(len(baseData)):
+#         if i in seedRecords:
+#             seedMask.append(True)
+#         else:
+#             seedMask.append(False)
+    
+#     seedTrainMask = []
+    
+#     for i in range(len(baseData)):
+#         if (i in trainRecords) and (i not in seedRecords):
+#             seedTrainMask.append(True)
+#         else:
+#             seedTrainMask.append(False)
+            
+#     return x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, tripsResults.groupby('oa_id').size()[trainMask].sum(), len(tripsResults), scalerY, scalerYSample
+
+#%%
+
+
+def getSampleRateTrips(oaIndex,allPOItrips,sr,cnx,baseData,mf):
+    
+    queryTripIds = []
+    #Randomly select trips from within the time stratum to sample the access cost
+    for oa in oaIndex:
+        oaTrips = allPOItrips[(allPOItrips['oa_id'] == oa)]
+        probeCutOff = int(len(oaTrips) * sr)
+        probeRecords = random.sample(range(len(oaTrips)), probeCutOff)
+        queryTripIds = queryTripIds + list(oaTrips['trip_id'].iloc[probeRecords])
+        
+    sqlQuery = 'select total_time, initial_wait_corrected, transit_time, fare, num_transfers, trip_id from results_full where trip_id in {}'.format(tuple(list(set(queryTripIds))))
+    tripsResults = pd.read_sql_query(sqlQuery, cnx)
+    
+    #Calculate access costs
+    tripsResults['sampleAccessCost'] = (( 1.5 * (tripsResults['total_time'] + tripsResults['initial_wait_corrected'])) - (0.5 * tripsResults['transit_time']) + ((tripsResults['fare'] * 3600) / 6.7) + (10 * tripsResults['num_transfers']) ) / 60
+    
+    tripsResults = tripsResults.merge(allPOItrips[['oa_id','trip_id']],left_on = 'trip_id', right_on = 'trip_id', how = 'left')
+    
+    baseData['sampleAccessCost'] = baseData['oa_id'].map(tripsResults.groupby('oa_id')['sampleAccessCost'].mean().to_dict()) 
+    
+    # Normalize features
+    scalerX = MinMaxScaler()
+    x = scalerX.fit_transform(np.array(baseData[mf]))
+    
+    scalerY = MinMaxScaler()
+    y = scalerY.fit_transform(np.array(baseData['avgAccessCost']).reshape(-1, 1)).squeeze()
+    
+    scalerYSample = MinMaxScaler()
+    ySample = scalerYSample.fit_transform(np.array(baseData['sampleAccessCost']).reshape(-1, 1)).squeeze()
+    
+    return x, y, ySample, baseData, tripsResults, len(tripsResults), scalerY, scalerYSample
+
+#%%
+
+def getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults):
     
     #Random
     if al == 0:
@@ -161,41 +288,6 @@ def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b,area):
     #Randomly select seed records from probe
     seefCutOff = int(b * ss)
     seedRecords = random.sample(trainRecords, seefCutOff)
-    
-    cnx = sqlite3.connect(dbLoc)
-    sqlQuery = 'select oa_id, trip_id, stratum from trips where oa_id in {} and poi_id in {} and stratum = "{}";'.format(tuple(list(set(oaIndex))),tuple(list(set(poiInd.astype(str)))),s)
-    allPOItrips = pd.read_sql_query(sqlQuery, cnx)
-    
-    queryTripIds = []
-    
-    #Randomly select trips from within the time stratum to sample the access cost
-    for oa in oaIndex:
-        oaTrips = allPOItrips[(allPOItrips['oa_id'] == oa)]
-        probeCutOff = int(len(oaTrips) * sr)
-        probeRecords = random.sample(range(len(oaTrips)), probeCutOff)
-        queryTripIds = queryTripIds + list(oaTrips['trip_id'].iloc[probeRecords])
-    
-    #Get trip details
-    sqlQuery = 'select total_time, initial_wait_corrected, transit_time, fare, num_transfers, trip_id from results_full where trip_id in {}'.format(tuple(list(set(queryTripIds))))
-    tripsResults = pd.read_sql_query(sqlQuery, cnx)
-    
-    #Calculate access costs
-    tripsResults['sampleAccessCost'] = (( 1.5 * (tripsResults['total_time'] + tripsResults['initial_wait_corrected'])) - (0.5 * tripsResults['transit_time']) + ((tripsResults['fare'] * 3600) / 6.7) + (10 * tripsResults['num_transfers']) ) / 60
-    
-    tripsResults = tripsResults.merge(allPOItrips[['oa_id','trip_id']],left_on = 'trip_id', right_on = 'trip_id', how = 'left')
-    
-    baseData['sampleAccessCost'] = baseData['oa_id'].map(tripsResults.groupby('oa_id')['sampleAccessCost'].mean().to_dict()) 
-    
-    # Normalize features
-    scalerX = MinMaxScaler()
-    x = scalerX.fit_transform(np.array(baseData[mf]))
-    
-    scalerY = MinMaxScaler()
-    y = scalerY.fit_transform(np.array(baseData['avgAccessCost']).reshape(-1, 1)).squeeze()
-    
-    scalerYSample = MinMaxScaler()
-    ySample = scalerYSample.fit_transform(np.array(baseData['sampleAccessCost']).reshape(-1, 1)).squeeze()
-    
     
     #Generate test and training masks
     testMask = []
@@ -224,5 +316,19 @@ def getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b,area):
             seedTrainMask.append(True)
         else:
             seedTrainMask.append(False)
-            
-    return x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, tripsResults.groupby('oa_id').size()[trainMask].sum(), len(tripsResults), scalerY, scalerYSample
+    
+    
+    val = int(b*0.1)
+    valRecords = random.sample(range(b), val)
+    valMask = []
+    valTestMask = []
+
+    for i in range(b):
+        if i in valRecords:
+            valMask.append(True)
+            valTestMask.append(False)
+        else:
+            valTestMask.append(True)
+            valMask.append(False)
+    
+    return testMask, trainMask, seedMask, seedTrainMask, valMask, valTestMask, tripsResults.groupby('oa_id').size()[trainMask].sum()

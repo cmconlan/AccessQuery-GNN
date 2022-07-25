@@ -132,7 +132,7 @@ for region in listLAD11CD:
     
     #Normalize matrix
     
-    normalized_k = 0.05
+    normalized_k = 0.38
     adjMxFlat = euclidMx[~np.isinf(euclidMx)].flatten()
     std = adjMxFlat.std()
     
@@ -144,7 +144,6 @@ for region in listLAD11CD:
     print('Adj Mx Gaus Formed')
     
     # Output
-    
     outputNumpy('Data/adjMx/' + str(region) + '/adjMx.csv',adjMx)
     
     # Calculat embeddings on normalized matrix

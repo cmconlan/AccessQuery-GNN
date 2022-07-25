@@ -1,10 +1,11 @@
 from Scripts.dataPrep import getBaseTrainingData, loadAdj
-from Scripts.expSetUp import getTestTrainingData,appendPredictedCostToFeatures,constructAdjMx
+from Scripts.expSetUp import getTestTrainingData,appendPredictedCostToFeatures,constructAdjMx, getSampleRateTrips
 from Scripts.methods import simpleSampling,OLSRegression,MLPRegression,GNNSimple
 from Scripts.evaluation import getPerformanceMetrics, writeResults
 from Scripts.util.database import Database
 from Baselines.labelPropagation import *
 from Baselines.meanTeacher import *
+import sqlite3
 import csv
 import os
 import time
@@ -207,6 +208,8 @@ oaIndex = list(oa_info['oa_id'])
 
 adjMx = np.load('Data/adjMx/' + str(area) + '/adjMx.csv')
 edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
+cnx = sqlite3.connect(dbLoc)
+
 
 #%%
 
@@ -223,28 +226,38 @@ for i in range(experimentParams['trials']):
             #Get base training data (e.g., OAs with relevant features from POI and stratum)
             baseData, oaIndex, poiLonLat, poiInd = getBaseTrainingData(shpFileLoc,oaInfoLoc,s,p,dbLoc,wm_oas,oa_info,oaIndex)
             
-            for pb in experimentParams['budgetsToTest']:
-                for sr in experimentParams['sampleRatesToTest']:
+            #Get trips for POIs and Stratum
+            sqlQuery = 'select oa_id, trip_id, stratum from trips where oa_id in {} and poi_id in {} and stratum = "{}";'.format(tuple(list(set(oaIndex))),tuple(list(set(poiInd.astype(str)))),s)
+            allPOItrips = pd.read_sql_query(sqlQuery, cnx)
+            
+            for sr in experimentParams['sampleRatesToTest']:
+                
+                x, y, ySample, baseData, tripsResults, numFullSample, scalerY, scalerYSample = getSampleRateTrips(oaIndex,allPOItrips,sr,cnx,baseData,mf)
+                
+                for pb in experimentParams['budgetsToTest']:
                     for al in experimentParams['ALToTest']:
                                             
                         #Budget
                         b = int(len(baseData) * pb)
                         
                         #Construct training matrices
-                        x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b,area)
+                        # x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b,area)
                         
-                        val = int(b*0.1)
-                        valRecords = random.sample(range(b), val)
-                        valMask = []
-                        valTestMask = []
+                        testMask, trainMask, seedMask, seedTrainMask, valMask, valTestMask, numSPQ = getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults)
+                        
+                        
+                        # val = int(b*0.1)
+                        # valRecords = random.sample(range(b), val)
+                        # valMask = []
+                        # valTestMask = []
 
-                        for i in range(b):
-                            if i in valRecords:
-                                valMask.append(True)
-                                valTestMask.append(False)
-                            else:
-                                valTestMask.append(True)
-                                valMask.append(False)
+                        # for i in range(b):
+                        #     if i in valRecords:
+                        #         valMask.append(True)
+                        #         valTestMask.append(False)
+                        #     else:
+                        #         valTestMask.append(True)
+                        #         valMask.append(False)
                         
                         if experimentParams['modelsToRun']['OLS']:
                             #OLS Regression

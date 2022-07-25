@@ -50,74 +50,74 @@ def getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trai
     baseData['absErrorPcnt'] = errorPct
         
     #read in shape file
-    wm_oas = gpd.read_file(shpFileLoc)
-    wm_oas = wm_oas[wm_oas['LAD11CD'] == area]
+    # wm_oas = gpd.read_file(shpFileLoc)
+    # wm_oas = wm_oas[wm_oas['LAD11CD'] == area]
     
-    wm_oas = wm_oas.merge(baseData[['oa_id','avgAccessCost','predictedAccessCost']], left_on = 'OA11CD', right_on = 'oa_id', how = 'left')
+    # wm_oas = wm_oas.merge(baseData[['oa_id','avgAccessCost','predictedAccessCost']], left_on = 'OA11CD', right_on = 'oa_id', how = 'left')
     
-    fig, axs = plt.subplots(3,2,figsize=(10,12))
+    # fig, axs = plt.subplots(3,2,figsize=(10,12))
     
-    #Row 2
-    for oa_i,oa_r in baseData[trainMask].iterrows():
-        axs[0,0].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 30, c = 'fuchsia', alpha = 0.5, marker = "p")
+    # #Row 2
+    # for oa_i,oa_r in baseData[trainMask].iterrows():
+    #     axs[0,0].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 30, c = 'fuchsia', alpha = 0.5, marker = "p")
         
-    baseData.plot.scatter(x = 'oa_lon', y = 'oa_lat', c = 'absError', colormap='viridis', ax = axs[0,0], s=6)
+    # baseData.plot.scatter(x = 'oa_lon', y = 'oa_lat', c = 'absError', colormap='viridis', ax = axs[0,0], s=6)
     
-    for poi in poiLonLat:
-        if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
-            axs[0,0].scatter(x = poi[0], y = poi[1], s = 6, c = 'red', alpha = 0.4, marker = "^")
+    # for poi in poiLonLat:
+    #     if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
+    #         axs[0,0].scatter(x = poi[0], y = poi[1], s = 6, c = 'red', alpha = 0.4, marker = "^")
     
-    axs[0,0].set_title('OAs plotted with error on colour scale')
+    # axs[0,0].set_title('OAs plotted with error on colour scale')
     
-    for oa_i,oa_r in baseData[trainMask].iterrows():
-        axs[0,1].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 30, c = 'fuchsia', alpha = 0.5, marker = "p")
+    # for oa_i,oa_r in baseData[trainMask].iterrows():
+    #     axs[0,1].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 30, c = 'fuchsia', alpha = 0.5, marker = "p")
     
-    baseData.plot.scatter(x = 'oa_lon', y = 'oa_lat', c = 'absErrorPcnt', colormap='viridis', ax = axs[0,1], s=6)
-    for poi in poiLonLat:
-        if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
-            axs[0,1].scatter(x = poi[0], y = poi[1], s = 6, c = 'red', alpha = 0.4, marker = "^")
-    axs[0,1].set_title('OAs plotted with error percent on colour scale')
+    # baseData.plot.scatter(x = 'oa_lon', y = 'oa_lat', c = 'absErrorPcnt', colormap='viridis', ax = axs[0,1], s=6)
+    # for poi in poiLonLat:
+    #     if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
+    #         axs[0,1].scatter(x = poi[0], y = poi[1], s = 6, c = 'red', alpha = 0.4, marker = "^")
+    # axs[0,1].set_title('OAs plotted with error percent on colour scale')
     
     
-    #Row 3
+    # #Row 3
     
-    for oa_i,oa_r in baseData.iterrows():
-        axs[1,0].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 10, c = 'fuchsia', marker = ".")
+    # for oa_i,oa_r in baseData.iterrows():
+    #     axs[1,0].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 10, c = 'fuchsia', marker = ".")
     
-    for poi in poiLonLat:
-        if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
-            axs[1,0].scatter(x = poi[0], y = poi[1], s = 40, c = 'blue', marker = "^")
+    # for poi in poiLonLat:
+    #     if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
+    #         axs[1,0].scatter(x = poi[0], y = poi[1], s = 40, c = 'blue', marker = "^")
     
-    for oa_i,oa_r in baseData[trainMask].iterrows():
-        axs[1,0].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 30, alpha = 0.6,c = 'green', marker = "o")
+    # for oa_i,oa_r in baseData[trainMask].iterrows():
+    #     axs[1,0].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 30, alpha = 0.6,c = 'green', marker = "o")
     
-    axs[1,0].set_title('Map of OAs, seed OAs and POI')
+    # axs[1,0].set_title('Map of OAs, seed OAs and POI')
     
-    for oa_i,oa_r in baseData[trainMask].iterrows():
-        axs[1,1].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 30, c = 'fuchsia', alpha = 0.5, marker = "p")
+    # for oa_i,oa_r in baseData[trainMask].iterrows():
+    #     axs[1,1].scatter(x = oa_r['oa_lon'], y = oa_r['oa_lat'], s = 30, c = 'fuchsia', alpha = 0.5, marker = "p")
     
-    baseData.sample(frac = 0.4).plot.scatter(x = 'oa_lon', y = 'oa_lat', c = 'absErrorPcnt', colormap='viridis', ax = axs[1,1], s=6)
-    for poi in poiLonLat:
-        if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
-            axs[1,1].scatter(x = poi[0], y = poi[1], s = 6, c = 'red', alpha = 0.4, marker = "^")
-    axs[1,1].set_title('OAs (sampled) plotted with error percent on colour scale')
+    # baseData.sample(frac = 0.4).plot.scatter(x = 'oa_lon', y = 'oa_lat', c = 'absErrorPcnt', colormap='viridis', ax = axs[1,1], s=6)
+    # for poi in poiLonLat:
+    #     if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
+    #         axs[1,1].scatter(x = poi[0], y = poi[1], s = 6, c = 'red', alpha = 0.4, marker = "^")
+    # axs[1,1].set_title('OAs (sampled) plotted with error percent on colour scale')
     
-    #Row 4
-    wm_oas.plot(column='avgAccessCost', cmap='OrRd', scheme='quantiles', ax = axs[2,0])
-    for poi in poiLonLat:
-        if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
-            axs[2,0].scatter(x = poi[0], y = poi[1], s = 10, alpha = 0.6, c = 'blue', marker = "^")
-    axs[2,0].set_title('Actual Access Costs')
-    wm_oas.plot(column='predictedAccessCost', cmap='OrRd', scheme='quantiles', ax = axs[2,1])
-    for poi in poiLonLat:
-        if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
-            axs[2,1].scatter(x = poi[0], y = poi[1], s = 10, alpha = 0.6, c = 'blue', marker = "^")
-    axs[2,1].set_title('Predicted Access Costs')
+    # #Row 4
+    # wm_oas.plot(column='avgAccessCost', cmap='OrRd', scheme='quantiles', ax = axs[2,0])
+    # for poi in poiLonLat:
+    #     if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
+    #         axs[2,0].scatter(x = poi[0], y = poi[1], s = 10, alpha = 0.6, c = 'blue', marker = "^")
+    # axs[2,0].set_title('Actual Access Costs')
+    # wm_oas.plot(column='predictedAccessCost', cmap='OrRd', scheme='quantiles', ax = axs[2,1])
+    # for poi in poiLonLat:
+    #     if  poi[0] >= min(baseData['oa_lon']) and poi[0] <= max(baseData['oa_lon']) and poi[1] >= min(baseData['oa_lat']) and poi[1] <= max(baseData['oa_lat']):
+    #         axs[2,1].scatter(x = poi[0], y = poi[1], s = 10, alpha = 0.6, c = 'blue', marker = "^")
+    # axs[2,1].set_title('Predicted Access Costs')
     
-    plt.tight_layout()
-    plt.savefig('Results/Plots/'+ymlFile+'/'+str(expNum)+'.png', bbox_inches='tight')
-    plt.cla()
-    plt.close(fig)
+    # plt.tight_layout()
+    # plt.savefig('Results/Plots/'+ymlFile+'/'+str(expNum)+'.png', bbox_inches='tight')
+    # plt.cla()
+    # plt.close(fig)
 
     return absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData
 
