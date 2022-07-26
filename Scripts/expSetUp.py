@@ -264,7 +264,7 @@ def getSampleRateTrips(oaIndex,allPOItrips,sr,cnx,baseData,mf):
 
 #%%
 
-def getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults):
+def getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults, adjMx):
     
     #Random
     if al == 0:
@@ -277,10 +277,10 @@ def getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults):
         trainRecords = distCluster(b,baseData)
     #Distance centrality
     elif al == 3:
-        trainRecords = degreeCentrality(b,baseData)
+        trainRecords = degreeCentrality(b,adjMx)
     #Eigenvector Centrality
     elif al == 4:
-        trainRecords = eigenCentrality(b,baseData)
+        trainRecords = eigenCentrality(b,adjMx)
     elif al == 5:
         trainRecords = featureCluster(b,baseData,mf)
     elif al == 6:

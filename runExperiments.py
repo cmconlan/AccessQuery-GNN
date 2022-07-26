@@ -243,7 +243,7 @@ for i in range(experimentParams['trials']):
                         #Construct training matrices
                         # x, y, ySample, testMask, trainMask, seedMask, seedTrainMask, baseData, numSPQ, numFullSample, scalerY, scalerYSample = getTestTrainingData(baseData,pb,al,oaIndex,ss,dbLoc,poiInd,s,sr,mf,b,area)
                         
-                        testMask, trainMask, seedMask, seedTrainMask, valMask, valTestMask, val, numSPQ = getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults)
+                        testMask, trainMask, seedMask, seedTrainMask, valMask, valTestMask, val, numSPQ = getTestTrainingData(al,baseData,b,oaIndex,mf,area,ss,tripsResults,adjMx)
                         
                         
                         # val = int(b*0.1)
