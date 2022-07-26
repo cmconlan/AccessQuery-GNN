@@ -466,7 +466,7 @@ for i in range(experimentParams['trials']):
                                 X_val = X_labeled[valMask]
                                 y_val = y_labeled[valMask]
                                 
-                                test_loss, best_val_loss, predictionStudent = optimize_mean_teacher(X_labeled, y_labeled, X_unlabeled, y_unlabeled,X_val, y_val,X_test, y_test)
+                                test_loss, best_val_loss, predVector = optimize_mean_teacher(X_labeled, y_labeled, X_unlabeled, y_unlabeled,X_val, y_val,X_test, y_test)
                                 tf.reset_default_graph()
                                 t1 = time.time()
                                 infTime = t1 - t0
