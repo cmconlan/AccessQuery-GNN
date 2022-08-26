@@ -399,6 +399,24 @@ for i in range(experimentParams['trials']):
                             method = 'COREG'
                             try:
                                 t0 = time.time()
+                                coregTrainer = CoregTrainer(data_dir,results_dir,num_train,num_trials,x,y,trainMask,testMask)
+                                coregTrainer.run_trials()
+                                predVector = coregTrainer.test_hat
+                                t1 = time.time()
+                                infTime = t1 - t0
+                                
+                                absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,baseData = getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum,area)
+                                writeResults(expNum,method,p, s, pb, sr, ss, al, absError,absErrorPcnt,jainActual,jainPred,jainsError,correation,corrConfidence,infTime,numSPQ,resultsFileName,baseData,ymlFile)
+                            except Exception as e:
+                                print(e)
+                                print('fail: ' + str(expNum))
+                                experimentsFailed.append(expNum)
+                        if experimentParams['modelsToRun']['COREG']:
+                            expNum += 1
+                            print('Experiment : ' + str(expNum))
+                            method = 'COREG-seeds'
+                            try:
+                                t0 = time.time()
                                 coregTrainer = CoregTrainer(data_dir,results_dir,num_train,num_trials,_x,y,trainMask,testMask)
                                 coregTrainer.run_trials()
                                 predVector = coregTrainer.test_hat
