@@ -34,7 +34,7 @@ class Feedforward(torch.nn.Module):
             return outputAct
 
 class GCN(torch.nn.Module):
-    def __init__(self, numFeatures, hidden_channel1, hidden_channel2, outputDim):
+    def __init__(self, numFeatures, hidden_channel1, hidden_channel2, outputDim, k, dp):
         super(GCN, self).__init__()
         torch.manual_seed(42)
 
@@ -43,8 +43,8 @@ class GCN(torch.nn.Module):
         #self.conv1 = GCNConv(numFeatures, hidden_channel1, improved = True)
         #self.conv2 = GCNConv(hidden_channel1, hidden_channel2, improved = True)
         #Cheb Conv
-        self.conv1 = ChebConv(numFeatures, hidden_channel1, K = 4)
-        self.conv2 = ChebConv(hidden_channel1, hidden_channel2, K = 4)
+        self.conv1 = ChebConv(numFeatures, hidden_channel1, K = k)
+        self.conv2 = ChebConv(hidden_channel1, hidden_channel2, K = k)
         #SGConv
         #self.conv1 = SGConv(numFeatures, hidden_channel1)
         #self.conv2 = SGConv(hidden_channel1, hidden_channel2)
@@ -54,18 +54,18 @@ class GCN(torch.nn.Module):
         self.out = Linear(hidden_channel2, outputDim)
 
     #def forward(self, x, edge_index):
-    def forward(self, x, edge_index, edgeWeights):
+    def forward(self, x, edge_index, edgeWeights, dp):
         # First Message Passing Layer (Transformation)
         x = self.conv1(x, edge_index, edgeWeights)
         #x = self.conv1(x, edge_index)
         x = x.relu()
-        x = F.dropout(x, p=0.5, training=self.training)
+        x = F.dropout(x, p= dp, training=self.training)
 
         # Second Message Passing Layer
         x = self.conv2(x, edge_index, edgeWeights)
         #x = self.conv2(x, edge_index)
         x = x.relu()
-        x = F.dropout(x, p=0.5, training=self.training)
+        x = F.dropout(x, p= dp, training=self.training)
         
         # Output layer 
         x = self.out(x)
@@ -140,7 +140,7 @@ def MLPRegression(x,y,trainMask,testMask,numHiddenLayers,epochs, device):
 
 #%% Method 4- Simple GNN
 
-def GNNSimple(x,y,device,edgeIndexNp,edgeWeightsNp,hidden1,hidden2,epochs,trainMask,testMask):
+def GNNSimple(x,y,device,edgeIndexNp,edgeWeightsNp,hidden1,hidden2,epochs,trainMask,testMask,k, dp):
     timeStart = time.time()
     #Attach data to tensor
     _x = torch.tensor(x).to(device).float()
@@ -150,7 +150,7 @@ def GNNSimple(x,y,device,edgeIndexNp,edgeWeightsNp,hidden1,hidden2,epochs,trainM
     edgeWeights2 = torch.tensor(np.expand_dims(edgeWeightsNp,1)).to(device).float()
     
     #Instantitate moedl
-    model = GCN(numFeatures = _x.shape[1], hidden_channel1=hidden1, hidden_channel2=hidden2, outputDim = 1)
+    model = GCN(numFeatures = _x.shape[1], hidden_channel1=hidden1, hidden_channel2=hidden2, outputDim = 1, k=k, p=dp)
     model = model.to(device)
     
     #Model settings
@@ -164,14 +164,14 @@ def GNNSimple(x,y,device,edgeIndexNp,edgeWeightsNp,hidden1,hidden2,epochs,trainM
     
     for epoch in range(0, epochs):
         optimizer.zero_grad()
-        out = model(_x, edgeIndex, edgeWeights2)
+        out = model(_x, edgeIndex, edgeWeights2, dp)
         loss = criterion(out[trainMask], _y[trainMask].unsqueeze(1))
         loss.backward()
         optimizer.step()
         #print('Epoch {}: train loss: {}'.format(epoch, loss.item()))
         losses.append(loss.item())
     timeEnd = time.time()
-    return np.squeeze(model(_x, edgeIndex, edgeWeights)[testMask].cpu().detach().numpy()), timeEnd-timeStart, losses
+    return np.squeeze(model(_x, edgeIndex, edgeWeights, dp)[testMask].cpu().detach().numpy()), timeEnd-timeStart, losses
 
 #%%
 #device = "cpu"

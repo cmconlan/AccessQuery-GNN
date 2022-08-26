@@ -134,7 +134,7 @@ print('--Modules Imported--')
 
 #%% Import experiment yaml
 
-#ymlFile = 'exp1'
+#ymlFile = 'exp101'
 ymlFile = sys.argv[1]
 print('YAML File : ' + str(ymlFile))
 
@@ -196,6 +196,8 @@ results_dir = ''
 num_train = 100
 num_trials = 1
 max_iters = 25
+chbK = 1
+dp = 0.05
 
 # Get Geouits
 
@@ -209,7 +211,6 @@ oaIndex = list(oa_info['oa_id'])
 adjMx = np.load('Data/adjMx/' + str(area) + '/adjMx.csv')
 edgeIndexNp,edgeWeightsNp = loadAdj(adjMx,oaIndex)
 cnx = sqlite3.connect(dbLoc)
-
 
 #%%
 
@@ -304,7 +305,7 @@ for i in range(experimentParams['trials']):
                                 timeTried = 0
                                 proceedGNNSimpl = False
                                 while proceedGNNSimpl == False:
-                                    predVector, infTime, losses = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask)
+                                    predVector, infTime, losses = GNNSimple(x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,trainMask,testMask,chbK,dp)
                                     timeTried += 1
                                     if float(losses[-1]) / float(losses[0]) < 0.95:
                                         proceedGNNSimpl = True
@@ -352,7 +353,7 @@ for i in range(experimentParams['trials']):
                                         _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
                                         proceedGNNSeeds = False
                                         while proceedGNNSeeds == False:
-                                            predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+                                            predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask,chbK,dp)
                                             timeTried += 1
                                             if float(losses[-1]) / float(losses[0]) < 0.95:
                                                 proceedGNNSeeds = True
@@ -377,7 +378,7 @@ for i in range(experimentParams['trials']):
                                     _x = appendPredictedCostToFeatures(baseData,seedMask,mfAcc,x,target='sampleAccessCost')
                                     proceedGNNSeeds = False
                                     while proceedGNNSeeds == False:
-                                        predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask)
+                                        predVector, infTime, losses = GNNSimple(_x,ySample,device,edgeIndexNp,edgeWeightsNp,hidden1GNN,hidden2GNN,epochsGNN,seedTrainMask,testMask,chbK,dp)
                                         timeTried += 1
                                         if float(losses[-1]) / float(losses[0]) < 0.95:
                                             proceedGNNSeeds = True
@@ -398,7 +399,7 @@ for i in range(experimentParams['trials']):
                             method = 'COREG'
                             try:
                                 t0 = time.time()
-                                coregTrainer = CoregTrainer(data_dir,results_dir,num_train,num_trials,x,y,trainMask,testMask)
+                                coregTrainer = CoregTrainer(data_dir,results_dir,num_train,num_trials,_x,y,trainMask,testMask)
                                 coregTrainer.run_trials()
                                 predVector = coregTrainer.test_hat
                                 t1 = time.time()

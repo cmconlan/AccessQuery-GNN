@@ -55,7 +55,6 @@ def normalizeAndOutput(adjMx, k, outputDir):
     adjMxNorm[adjMxNorm >= 1] = 0
     
     #Min max normalization
-    
     adjMxNormMM = 1 - (adjMx - adjMx.min()) / (adjMx.max() - adjMx.min())
     
     #Output matrices
@@ -71,6 +70,87 @@ travel_speed = 4.5
 
 #listLAD11CD = ['E08000025','E08000026','E08000027','E08000028','E08000029','E08000030','E08000031']
 listLAD11CD = ['E08000026','E08000025']
+
+#%%
+
+for region in listLAD11CD:
+
+    print('REGION : ' + str(region))
+    
+    #Get west midlands shape files
+    wm_oas = gpd.read_file(shpFileLoc)
+    wm_oas = wm_oas[wm_oas['LAD11CD'] == region]
+    
+    oa_info = pd.read_csv(oaInfoLoc)
+    oa_info = oa_info.merge(wm_oas[['OA11CD']], left_on = 'oa_id', right_on = 'OA11CD', how = 'inner')
+    oaIndex = list(oa_info['oa_id'])
+    
+    #Calculate Euclidean Distance matrix
+    
+    euclidMx = np.zeros((len(oaIndex),len(oaIndex)))
+    
+    counti = 0
+    
+    for i in oaIndex:
+        print(counti)
+        baseOA = oa_info[oa_info['oa_id'] == i][['oa_lon','oa_lat']]
+        countj = 0
+        for j in oaIndex:
+            targetOA = oa_info[oa_info['oa_id'] == j]
+            euclidMx[counti,countj] = haversine(baseOA['oa_lon'],baseOA['oa_lat'],targetOA['oa_lon'],targetOA['oa_lat'])
+            countj += 1
+        counti += 1
+    
+    print('Adj Mx Constructed')
+    
+    # Output Matrix
+    
+    outputNumpy('Data/adjMx/' + str(region) + '/euclidMx.csv', euclidMx)
+    
+    # Use node2vec to calculate node embeddings
+    
+    # G = nx.DiGraph(euclidMx)
+    
+    # g_emb = n2v(
+    #   G,
+    #   dimensions=16,
+    #   weight_key = 'weight'
+    # )
+    
+    # mdl = g_emb.fit(
+    #     vector_size = 16,
+    #     window=WINDOW,
+    #     min_count=MIN_COUNT,
+    #     batch_words=BATCH_WORDS
+    # )
+    
+    # print('NODE2VEC for euclid')
+    
+    # Ouput
+    
+    # outputNumpy('Data/adjMx/' + str(region) + '/euclidEmbeddings.csv', mdl.wv.vectors)
+    
+    #Normalize matrix
+    
+    normalized_k = 0.38
+    adjMxFlat = euclidMx[~np.isinf(euclidMx)].flatten()
+    std = adjMxFlat.std()
+    
+    adjMx = np.exp(-np.square(euclidMx / std))
+    
+    adjMx[adjMx < normalized_k] = 0
+    adjMx[adjMx >= 1] = 0
+    
+    print('Adj Mx Gaus Formed')
+    
+    # Output
+    outputNumpy('Data/adjMx/' + str(region) + '/adjMx.csv',adjMx)
+    
+    #Min Max Normalization
+    adjMxNormMM = 1 - (euclidMx - euclidMx.min()) / (euclidMx.max() - euclidMx.min())
+    
+    # Output
+    outputNumpy('Data/adjMx/' + str(region) + '/adjMxMM.csv',adjMx)
 
 #%%
 for region in listLAD11CD:
@@ -145,6 +225,12 @@ for region in listLAD11CD:
     
     # Output
     outputNumpy('Data/adjMx/' + str(region) + '/adjMx.csv',adjMx)
+    
+    #Min Max Normalization
+    adjMxNormMM = 1 - (euclidMx - euclidMx.min()) / (euclidMx.max() - euclidMx.min())
+    
+    # Output
+    outputNumpy('Data/adjMx/' + str(region) + '/adjMxMM.csv',adjMx)
     
     # Calculat embeddings on normalized matrix
     

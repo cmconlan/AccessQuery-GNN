@@ -10,17 +10,23 @@ import geopandas as gpd
 #Output performance statistic to central repository
 #Plot access on map and output
 
-def getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum, area):
+def getPerformanceMetrics(testMask,scalerY,predVector,baseData,y,shpFileLoc,trainMask,poiLonLat,ymlFile,expNum, area, predictAll = False):
 
     predInd = 0
     predicted = []
     
-    for i in range(len(testMask)):
-        if testMask[i]:
+    if predictAll:
+        for i in range(len(testMask)):
             predicted.append(scalerY.inverse_transform(predVector[predInd].reshape(1, -1))[0][0])
             predInd += 1
-        else:
-            predicted.append(baseData['avgAccessCost'].values[i])
+
+    else:
+        for i in range(len(testMask)):
+            if testMask[i]:
+                predicted.append(scalerY.inverse_transform(predVector[predInd].reshape(1, -1))[0][0])
+                predInd += 1
+            else:
+                predicted.append(baseData['avgAccessCost'].values[i])
     
     predicted = np.array(predicted)
     
