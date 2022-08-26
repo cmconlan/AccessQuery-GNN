@@ -39,9 +39,9 @@ def appendPredictedCostToFeatures(inputData,mask,features,x,target='sampleAccess
 
     for i,r in inputData.iterrows():
         if mask[i]:
-            predictedAccessCost.append(model.predict(r[features]).values[0])
+            predictedAccessCost.append(r[target])
         else:
-            predictedAccessCost.append(r[target])        
+            predictedAccessCost.append(model.predict(r[features]).values[0])
 
     inputData['predictedScore'] = predictedAccessCost
     
